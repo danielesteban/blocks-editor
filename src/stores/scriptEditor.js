@@ -1,0 +1,26 @@
+import { writable } from 'svelte/store';
+
+export default () => writable([
+  'const size = 32;',
+  'const radius = (size * 0.5) - 0.5;',
+  'const offset = size * 0.25;',
+  'for (let x = 0; x < size; x += 1) {',
+  '  for (let y = 0; y < size; y += 1) {',
+  '    for (let z = 0; z < size; z += 1) {',
+  '      let type = 0;',
+  '      const cx = x - radius;',
+  '      const cz = z - radius;',
+  '      if (y === 0 || y > 5 || Math.abs(cx) > 2) {',
+  '        const height = Math.max(Math.min(',
+  '          size * Math.exp(-(cx*cx + cz*cz) / (size * 2)),',
+  '          size * noise.noise3d(cx / 3, y / 3, cz / 3)',
+  '        ), 1);',
+  '        if (y < height) {',
+  '          type = 1;',
+  '        }',
+  '      }',
+  '      update(x - offset, y, z - offset, type);',
+  '    }',
+  '  }',
+  '}',
+].join('\n'));

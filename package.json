@@ -1,0 +1,33 @@
+{
+  "name": "blocks-editor",
+  "description": "Blocks editor",
+  "author": "Daniel Esteban Nombela",
+  "version": "1.0.0",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "rollup -c rollup.config.js",
+    "deploy": "gh-pages -d dist -u \"Travis CI <travis@travis-ci.org>\"",
+    "serve": "sirv --dev -s -q -p 8080 dist",
+    "start": "npm run build -- -w"
+  },
+  "dependencies": {
+    "codemirror": "^5.58.1",
+    "express": "^4.17.1",
+    "svelte": "^3.29.0",
+    "three": "^0.121.1"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^15.1.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^9.0.0",
+    "gh-pages": "^3.1.0",
+    "rollup": "^2.28.2",
+    "rollup-plugin-copy": "^3.3.0",
+    "rollup-plugin-css-only": "^2.1.0",
+    "rollup-plugin-livereload": "^2.0.0",
+    "rollup-plugin-svelte": "^6.0.1",
+    "rollup-plugin-terser": "^7.0.2",
+    "sirv-cli": "^1.0.6"
+  }
+}
