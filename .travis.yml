@@ -1,0 +1,12 @@
+language: node_js
+node_js: lts/*
+env:
+- secure: zs9G3loCsDUCM0NdcRmGaWoeEz8zC7F22AiSuzoFntQW3Jf3qlEDj0IFCXZSDIn94IrOm8y9zswlarjlHmGECRDMpuDlGOAHqWbKI0/FmsCS0GWQgKAvRIbzKaH+AHUXP2gy6uJSvkAuV+FXvDG5Vgbk/xRQPaR5GgAYgfrzx0f/6Td/8fim6osfVPv4OafH7ZN3mHr4ZpAHICNiWoqvBFeDDVLZx/b/b5AZyF1lLGCKzb1z7UiS/n5Bsio+KPli2wjrqsaPcqG1gXlEriJNTzW9eq1kbS1+YSe/dQ9k6KmxD5bmPIg2bnAe5Ue7EMsUchk0iZLYTX+ixfLWdYcx0eabgbc0NapzsqCZfV91pzI75bWe3In403rm7h2PjKyWwsxJmfDbL4F/mBbFYo6DvuMIBZI4u++gB+QoBqLwRgA6iOB1btPqWZgnm1Cvz1FONPdhM5xiWtlSzQd0YIkh+0vbjgBX2WK1MW6IFj9jtx49Hnu9e8R4wDd8lZNQ42W8XlquYS4Zxit6xm9OEb1FWwk806cIVzTKFuRSkHv0RZe+3lJbgPK+IhUvfx/qo/yU67VYr5S/3intJR1bpI+Qov3CYuzBb73b6WZoUpANA01tTl4MMSTaRYxJZnsDnK6qLIhwnBce4F2xEUmE0SpBOnibeDeY7ylRt7n3eIejPzY=
+script:
+- NODE_ENV=production npm run build
+deploy:
+  provider: script
+  script: npm run deploy -- -r https://${GITHUB_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git
+  skip_cleanup: true
+  on:
+    branch: master

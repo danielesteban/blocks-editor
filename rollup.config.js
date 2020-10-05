@@ -68,6 +68,7 @@ export default [
       css({ output: path.join(__dirname, 'dist', 'vendor.css') }),
       copy({
         targets: [
+          { src: 'screenshot.png', dest: 'dist' },
           { src: 'src/index.html', dest: 'dist' },
           { src: 'src/index.css', dest: 'dist' },
         ]
