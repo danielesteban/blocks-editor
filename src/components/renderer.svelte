@@ -1,6 +1,6 @@
 
 <script>
-  import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import {
     ACESFilmicToneMapping,
     Clock,
@@ -10,8 +10,6 @@
     sRGBEncoding,
     WebGLRenderer,
   } from 'three';
-
-  const dispatch = createEventDispatcher();
 
   export let initialPosition = { x: 0, y: 0, z: 0 };
   export let alpha = false;
@@ -32,7 +30,7 @@
   scene.player = player;
 
   let lastControls;
-  $: if (controls != lastControls) {
+  $: if (controls !== lastControls) {
     lastControls = controls;
     controls.setup({ player, renderer });
   }

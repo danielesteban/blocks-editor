@@ -14,7 +14,7 @@ const production = !process.env.ROLLUP_WATCH;
 
 const cname = (domain) => ({
   writeBundle() {
-    fs.writeFileSync(path.join(__dirname, 'dist', 'CNAME'), domain)
+    fs.writeFileSync(path.join(__dirname, 'dist', 'CNAME'), domain);
   },
 });
 
@@ -71,7 +71,7 @@ export default [
           { src: 'screenshot.png', dest: 'dist' },
           { src: 'src/index.html', dest: 'dist' },
           { src: 'src/index.css', dest: 'dist' },
-        ]
+        ],
       }),
       ...(production ? [terser(), cname('blocks-editor.gatunes.com')] : [serve(), livereload(path.join(__dirname, 'dist'))]),
     ],

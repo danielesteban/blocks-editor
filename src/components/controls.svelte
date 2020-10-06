@@ -44,7 +44,6 @@
     animation: { delta },
     camera,
     player,
-    viewport,
   }) => {
     if (!isLocked) {
       return;
@@ -97,7 +96,7 @@
         buttons[`${button}Up`] = false;
       });
     }
-  }
+  };
 
   export const request = () => {
     if (isLocked) {

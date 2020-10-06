@@ -118,7 +118,7 @@
           imageData[0],
           imageData[1],
           imageData[2],
-          $colors.current[3]
+          $colors.current[3],
         ], i === 1);
         break;
       }
@@ -149,7 +149,7 @@
         max={6}
         step={2}
         value={$colors.brush}
-        on:change={({ target: { value }}) => { colors.setBrush(value); }}
+        on:change={({ target: { value } }) => { colors.setBrush(value); }}
       />
     </label>
     <label>
@@ -160,7 +160,7 @@
         max={1}
         step={0.01}
         value={$colors.noise}
-        on:input={({ target: { value }}) => { colors.setNoise(value); }}
+        on:input={({ target: { value } }) => { colors.setNoise(value); }}
       />
     </label>
     <label>
@@ -172,7 +172,7 @@
         max={0xFF}
         step={1}
         value={opacity}
-        on:input={({ target: { value }}) => { colors.setAlpha(value); }}
+        on:input={({ target: { value } }) => { colors.setAlpha(value); }}
       />
     </label>
   </tools>

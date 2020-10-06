@@ -28,7 +28,7 @@
           && $colors.current[2] === b
           && $colors.current[3] === a
         ))
-      ) 
+      )
     ) {
       lastColor = $colors.current;
       colors.addToPalette($colors.current);
@@ -41,7 +41,7 @@
     <input
       type="text"
       value={type.name}
-      on:change={({ target: { value }}) => { types.update($editor, 'name', value); }}
+      on:change={({ target: { value } }) => { types.update($editor, 'name', value); }}
     />
   </name>
   <modifiers>
@@ -50,7 +50,7 @@
       <!-- svelte-ignore a11y-no-onchange -->
       <select
         value={type.model}
-        on:change={({ target: { value }}) => { types.update($editor, 'model', value); }}
+        on:change={({ target: { value } }) => { types.update($editor, 'model', value); }}
       >
         <option value="box">
           Box
@@ -64,7 +64,7 @@
       <input
         type="checkbox"
         checked={type.isLight}
-        on:change={({ target: { checked }}) => { types.update($editor, 'isLight', checked); }}
+        on:change={({ target: { checked } }) => { types.update($editor, 'isLight', checked); }}
       />
       Emits light
     </label>
@@ -72,7 +72,7 @@
       <input
         type="checkbox"
         checked={type.isTransparent}
-        on:change={({ target: { checked }}) => { types.update($editor, 'isTransparent', checked); }}
+        on:change={({ target: { checked } }) => { types.update($editor, 'isTransparent', checked); }}
       />
       Transparent
     </label>

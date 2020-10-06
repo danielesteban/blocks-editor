@@ -7,7 +7,7 @@
 
   const onSave = () => blocks.save('blocks');
 
-  const onReset = (type) => {
+  const onReset = () => {
     if (!confirm('Are you sure?')) {
       return;
     }

@@ -13,7 +13,7 @@ import {
   sRGBEncoding,
   UnsignedByteType,
   UVMapping,
-  Vector3
+  Vector3,
 } from 'three';
 
 // Voxels chunk
