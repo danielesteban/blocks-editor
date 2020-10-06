@@ -728,7 +728,7 @@ const computePhysics = ({ offset = { x: -8, y: -1, z: -8 } }) => {
           };
           boxes.push(box);
 
-          for (let i = x; i <= max.x; i += 1) {
+          for (let i = x + 1; i <= max.x; i += 1) {
             if (!hasMass(i, y, z) || map.has(`${i}:${y}:${z}`)) {
               box.size.x = i - x;
               break;
@@ -747,7 +747,7 @@ const computePhysics = ({ offset = { x: -8, y: -1, z: -8 } }) => {
           box.size.z = max.z - z;
           for (let i = x; i < x + box.size.x; i += 1) {
             for (let j = y; j < y + box.size.y; j += 1) {
-              for (let k = z; k <= z + box.size.z; k += 1) {
+              for (let k = z + 1; k <= z + box.size.z; k += 1) {
                 if (!hasMass(i, j, k) || map.has(`${i}:${j}:${k}`)) {
                   box.size.z = k - z;
                 }
