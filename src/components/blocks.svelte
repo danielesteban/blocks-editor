@@ -51,6 +51,9 @@
           }
         });
         break;
+      case 'physics':
+        onPhysics(message.boxes);
+        break;
       case 'pick':
         onPick(message.block);
         break;
@@ -188,6 +191,31 @@
       binary: true,
     }));
   };
+
+  let computing;
+  const onPhysics = (boxes) => {
+    const serialized = JSON.stringify(boxes);
+    computing.forEach((resolve) => resolve(serialized));
+    computing = undefined;
+  };
+  export const computePhysics = (download) => new Promise((resolve) => {
+    if (computing) {
+      computing.push(resolve);
+      return;
+    }
+    computing = [resolve];
+    worker.postMessage({
+      type: 'computePhysics',
+    });
+  })
+    .then((serialized) => {
+      if (download) {
+        downloader.download = `${download}.json`;
+        downloader.href = URL.createObjectURL(new Blob([serialized], { type: 'application/json' }));
+        downloader.click();
+      }
+      return serialized;
+    });
 
   const grid = new Grid();
 

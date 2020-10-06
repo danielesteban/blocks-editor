@@ -1,11 +1,11 @@
 <script>
   export let blocks;
 
-  const onExport = () => blocks.gltf('blocks');
+  const onExport = () => blocks.gltf('model');
   
   const onLoad = () => blocks.load();
 
-  const onSave = () => blocks.save('blocks');
+  const onPhysics = () => blocks.computePhysics('physics');
 
   const onReset = () => {
     if (!confirm('Are you sure?')) {
@@ -13,28 +13,44 @@
     }
     blocks.reset();
   };
+
+  const onSave = () => blocks.save('blocks');
 </script>
 
 <tools>
-  <button on:click={onLoad}>
-    Load
-  </button>
-  <button on:click={onSave}>
-    Save
-  </button>
-  <button on:click={onExport}>
-    Export
-  </button>
-  <button on:click={onReset}>
-    Reset
-  </button>
+  <div>
+    <button on:click={onLoad}>
+      Load
+    </button>
+    <button on:click={onSave}>
+      Save
+    </button>
+    <button on:click={onReset}>
+      Reset
+    </button>
+  </div>
+  <div>
+    <button on:click={onExport}>
+      Export Model
+    </button>
+    <button on:click={onPhysics}>
+      Export Physics
+    </button>
+  </div>
 </tools>
 
 <style>
   tools {
     display: flex;
+    flex-direction: column;
     background: #222;
-    padding: 1rem 0.5rem;
+    padding: 0.5rem 0;
+  }
+
+  tools > div {
+    display: flex;
+    background: #222;
+    padding: 0.5rem;
   }
 
   button {

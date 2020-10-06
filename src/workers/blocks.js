@@ -690,6 +690,89 @@ const remeshAll = (() => {
   };
 })();
 
+const computePhysics = ({ offset = { x: -8, y: -1, z: -8 } }) => {
+  const hasMass = (x, y, z) => {
+    if (y < 0 || y >= maxHeight) {
+      return false;
+    }
+    const cx = Math.floor(x / size);
+    const cz = Math.floor(z / size);
+    const key = `${cx}:${cz}`;
+    const chunk = meshedChunks.get(key);
+    if (!chunk) {
+      return false;
+    }
+    x -= size * chunk.x;
+    z -= size * chunk.z;
+    const type = chunk.voxels[getIndex(x, y, z)];
+    return type !== 0 && types[type].model !== 'cross';
+  };
+
+  const { min, max } = [...meshedChunks.values()].reduce(({ min, max }, { x, z }) => ({
+    min: { x: Math.min(min.x, x * size), z: Math.min(min.z, z * size) },
+    max: { x: Math.max(max.x, (x + 1) * size), z: Math.max(max.z, (z + 1) * size) },
+  }), { min: { x: Infinity, z: Infinity }, max: { x: -Infinity, z: -Infinity } });
+
+  const boxes = [];
+  const map = new Map();
+
+  // eslint-disable-next-line prefer-destructuring
+  for (let x = min.x; x < max.x; x += 1) {
+    for (let y = 0; y < maxHeight; y += 1) {
+      // eslint-disable-next-line prefer-destructuring
+      for (let z = min.z; z < max.z; z += 1) {
+        if (hasMass(x, y, z) && !map.has(`${x}:${y}:${z}`)) {
+          const box = {
+            position: { x, y, z },
+            size: { x: 0, y: 0, z: 0 },
+          };
+          boxes.push(box);
+
+          for (let i = x; i <= max.x; i += 1) {
+            if (!hasMass(i, y, z) || map.has(`${i}:${y}:${z}`)) {
+              box.size.x = i - x;
+              break;
+            }
+          }
+
+          box.size.y = maxHeight - y;
+          for (let i = x; i < x + box.size.x; i += 1) {
+            for (let j = y + 1; j <= y + box.size.y; j += 1) {
+              if (!hasMass(i, j, z) || map.has(`${i}:${j}:${z}`)) {
+                box.size.y = j - y;
+              }
+            }
+          }
+
+          box.size.z = max.z - z;
+          for (let i = x; i < x + box.size.x; i += 1) {
+            for (let j = y; j < y + box.size.y; j += 1) {
+              for (let k = z; k <= z + box.size.z; k += 1) {
+                if (!hasMass(i, j, k) || map.has(`${i}:${j}:${k}`)) {
+                  box.size.z = k - z;
+                }
+              }
+            }
+          }
+
+          for (let i = x; i < x + box.size.x; i += 1) {
+            for (let j = y; j < y + box.size.y; j += 1) {
+              for (let k = z; k < z + box.size.z; k += 1) {
+                map.set(`${i}:${j}:${k}`, true);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return boxes.map(({ position, size }) => [
+    [position.x + offset.x, position.y + offset.y, position.z + offset.z],
+    [size.x, size.y, size.z],
+  ]);
+};
+
 context.addEventListener('message', ({ data: message }) => {
   switch (message.type) {
     case 'types': {
@@ -871,6 +954,12 @@ context.addEventListener('message', ({ data: message }) => {
             voxels: btoa(String.fromCharCode.apply(null, data)),
           };
         }),
+      });
+      break;
+    case 'computePhysics':
+      context.postMessage({
+        type: 'physics',
+        boxes: computePhysics(message),
       });
       break;
     case 'reset':
