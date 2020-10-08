@@ -20,7 +20,7 @@
     if (
       !repeat
       && keyCode === 72
-      && target.tagName.toUpperCase() !== 'INPUT'
+      && !['INPUT', 'TEXTAREA'].includes(target.tagName.toUpperCase())
     ) {
       isVisible = !isVisible;
     }

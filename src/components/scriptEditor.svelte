@@ -47,7 +47,7 @@
 
 <style>
   code {
-    flex-grow: 1;
+    height: calc(100% - 86px)
   }
 
   tools {
