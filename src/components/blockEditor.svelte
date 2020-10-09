@@ -66,7 +66,7 @@
         checked={type.isLight}
         on:change={({ target: { checked } }) => { types.update($editor, 'isLight', checked); }}
       />
-      Emits light
+      Light
     </label>
     <label>
       <input
@@ -75,6 +75,14 @@
         on:change={({ target: { checked } }) => { types.update($editor, 'isTransparent', checked); }}
       />
       Transparent
+    </label>
+    <label>
+      <input
+        type="checkbox"
+        checked={type.isGhost}
+        on:change={({ target: { checked } }) => { types.update($editor, 'isGhost', checked); }}
+      />
+      Ghost
     </label>
   </modifiers>
 </block>

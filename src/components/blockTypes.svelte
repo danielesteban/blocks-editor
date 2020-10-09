@@ -47,9 +47,11 @@
     <info>
       <name>{type.name}</name>
       <modifiers>
-        {type.isTransparent ? 'transparent' : ''}
-        {type.isTransparent && type.isLight ? ' | ' : ''}
-        {type.isLight ? 'emits light' : ''}
+        {[
+          ...(type.isTransparent ? ['transparent'] : []),
+          ...(type.isLight ? ['emits light'] : []),
+          ...(type.isGhost ? ['ghost'] : []),
+        ].join(' | ')}
         &nbsp;
       </modifiers>
       <actions>

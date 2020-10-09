@@ -42,14 +42,13 @@
           voxels.update(geometries);
         });
         children.length = 0;
-        [...subchunks.values()].forEach(({ meshes }) => {
-          if (meshes.opaque.visible) {
-            children.push(meshes.opaque);
-          }
-          if (meshes.transparent.visible) {
-            children.push(meshes.transparent);
-          }
-        });
+        [...subchunks.values()].forEach(({ meshes }) => (
+          ['ghost', 'opaque', 'transparent'].forEach((key) => {
+            if (meshes[key].visible) {
+              children.push(meshes[key]);
+            }
+          })
+        ));
         break;
       case 'physics':
         onPhysics(message.boxes);
@@ -99,6 +98,7 @@
         selected = 0;
         children.length = 0;
         [...subchunks.values()].forEach(({ meshes }) => {
+          meshes.ghost.visible = false;
           meshes.opaque.visible = false;
           meshes.transparent.visible = false;
         });
@@ -151,6 +151,7 @@
   export const reset = () => {
     children.length = 0;
     [...subchunks.values()].forEach(({ meshes }) => {
+      meshes.ghost.visible = false;
       meshes.opaque.visible = false;
       meshes.transparent.visible = false;
     });

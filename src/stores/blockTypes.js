@@ -106,6 +106,7 @@ export default () => {
         update((types) => [...types, {
           name: type.name || 'New Block',
           model: type.model || 'box',
+          isGhost: false,
           isLight: type.isLight || false,
           isTransparent: type.isTransparent || false,
           key,
@@ -135,7 +136,7 @@ export default () => {
           },
           ...types.slice(type + 1),
         ]);
-        if (key === 'isTransparent') {
+        if (~['isGhost', 'isTransparent', 'model'].indexOf(key)) {
           updateAtlas();
         }
       },
@@ -176,14 +177,15 @@ export default () => {
     updateAtlas = () => {
       const $textures = get(textures);
       const $types = get(types);
-      const materials = $types.reduce((materials, { isTransparent }, i) => {
-        const { bottom, side, top } = $textures[i];
-        const type = materials[isTransparent ? 'transparent' : 'opaque'];
-        type.push(
-          bottom,
-          side,
-          top
-        );
+      const materials = $types.reduce((materials, { model, isGhost, isTransparent }, i) => {
+        if (!isGhost) {
+          const { bottom, side, top } = $textures[i];
+          const type = materials[isTransparent ? 'transparent' : 'opaque'];
+          type.push(top);
+          if (model !== 'cross') {
+            type.push(side, bottom);
+          }
+        }
         return materials;
       }, { opaque: [], transparent: [] });
       set(['opaque', 'transparent'].reduce((atlas, key) => {

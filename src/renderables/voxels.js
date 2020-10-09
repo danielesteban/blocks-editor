@@ -21,6 +21,10 @@ import {
 class Voxels extends Group {
   static setupMaterials() {
     Voxels.materials = {
+      ghost: new MeshBasicMaterial({
+        vertexColors: true,
+        wireframe: true,
+      }),
       opaque: new MeshBasicMaterial({
         vertexColors: true,
       }),
@@ -115,10 +119,11 @@ class Voxels extends Group {
     super();
     this.matrixAutoUpdate = false;
     this.meshes = {
+      ghost: new Mesh(new BufferGeometry(), Voxels.materials.ghost),
       opaque: new Mesh(new BufferGeometry(), Voxels.materials.opaque),
       transparent: new Mesh(new BufferGeometry(), Voxels.materials.transparent),
     };
-    ['opaque', 'transparent'].forEach((key) => {
+    ['ghost', 'opaque', 'transparent'].forEach((key) => {
       this.meshes[key].matrixAutoUpdate = false;
       this.add(this.meshes[key]);
     });
@@ -150,7 +155,7 @@ class Voxels extends Group {
 
   update(geometries) {
     const { meshes } = this;
-    ['opaque', 'transparent'].forEach((key) => {
+    ['ghost', 'opaque', 'transparent'].forEach((key) => {
       const {
         color,
         position,

@@ -333,6 +333,13 @@ const isVisible = (type, neighbor) => (
   !types[type].isCulled
   || !types[neighbor].isCulled
   || (
+    types[neighbor].isGhost
+    && (
+      !types[type].isGhost
+      || type !== neighbor
+    )
+  )
+  || (
     types[neighbor].isTransparent
     && (
       !types[type].isTransparent
@@ -372,22 +379,16 @@ const mesh = (cx, cz) => {
   });
   const get = getVoxelData(chunk);
   return [...Array(subchunks)].map((v, subchunk) => {
-    const geometry = {
-      opaque: {
+    const geometry = ['ghost', 'opaque', 'transparent'].reduce((meshes, key) => {
+      meshes[key] = {
         color: [],
         position: [],
         uv: [],
         index: [],
         offset: 0,
-      },
-      transparent: {
-        color: [],
-        position: [],
-        uv: [],
-        index: [],
-        offset: 0,
-      },
-    };
+      };
+      return meshes;
+    }, {});
     const pushFace = (
       p1,
       p2,
@@ -410,7 +411,12 @@ const mesh = (cx, cz) => {
         uvs.unshift(uvs.pop());
         vertices.unshift(vertices.pop());
       }
-      const mesh = types[type].isTransparent ? geometry.transparent : geometry.opaque;
+      let mesh = geometry.opaque;
+      if (types[type].isGhost) {
+        mesh = geometry.ghost;
+      } else if (types[type].isTransparent) {
+        mesh = geometry.transparent;
+      }
       lighting.forEach((light) => mesh.color.push(light, light, light));
       uvs.forEach((uv) => mesh.uv.push(...uv));
       vertices.forEach((vertex) => mesh.position.push(...vertex));
@@ -627,7 +633,7 @@ const mesh = (cx, cz) => {
         }
       }
     }
-    return ['opaque', 'transparent'].reduce((meshes, key) => {
+    return ['ghost', 'opaque', 'transparent'].reduce((meshes, key) => {
       const {
         color,
         position,
@@ -652,7 +658,7 @@ const remesh = (x, z) => {
     position: { x, z },
     subchunks,
   }, subchunks.reduce((buffers, meshes) => {
-    ['opaque', 'transparent'].forEach((mesh) => {
+    ['ghost', 'opaque', 'transparent'].forEach((mesh) => {
       mesh = meshes[mesh];
       buffers.push(
         mesh.color.buffer,
@@ -800,16 +806,19 @@ context.addEventListener('message', ({ data: message }) => {
         ...message.types
           .map((type) => {
             const material = type.isTransparent ? 'transparent' : 'opaque';
+            const isCross = type.model === 'cross';
             const index = textures[material];
-            textures[material] += 3;
+            if (!type.isGhost) {
+              textures[material] += isCross ? 1 : 3;
+            }
             return {
               ...type,
-              hasAO: type.model !== 'cross',
-              isCulled: type.model !== 'cross',
-              isTranslucent: type.isTransparent || type.model === 'cross',
-              textures: [
-                index + 2,
+              hasAO: !isCross,
+              isCulled: !isCross,
+              isTranslucent: isCross || type.isTransparent,
+              textures: isCross ? [index] : [
                 index,
+                index + 2,
                 index + 1,
                 index + 1,
                 index + 1,
@@ -849,6 +858,7 @@ context.addEventListener('message', ({ data: message }) => {
             const current = types[i];
             if (
               prev.model !== current.model
+              || prev.isGhost !== current.isGhost
               || prev.isLight !== current.isLight
               || prev.isTransparent !== current.isTransparent
             ) {
