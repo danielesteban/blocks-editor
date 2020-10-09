@@ -22,9 +22,6 @@
     codemirror.on('change', () => {
       $script = codemirror.getValue();
       currentScript = $script;
-      currentScript.split('\n').forEach((line) => {
-        console.log(`'${line}',`)
-      });
     });
   });
 
