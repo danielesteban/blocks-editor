@@ -7,6 +7,7 @@
 
  * [multiplayer-boilerplate](https://multiplayer-boilerplate.glitch.me/)
  * [physics-boilerplate](https://physics-boilerplate.glitch.me/)
+ * [physics-boilerplate-2](https://physics-boilerplate-2.glitch.me/)
 
 #### Local development
 
