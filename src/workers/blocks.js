@@ -271,6 +271,19 @@ const update = ({
   return chunk;
 };
 
+const clone = ({ x, y, z }, to) => {
+  const chunk = getChunk(
+    Math.floor(x / size),
+    Math.floor(z / size)
+  );
+  x -= size * chunk.x;
+  z -= size * chunk.z;
+  return update({
+    ...to,
+    type: chunk.voxels[getIndex(x, y, z)],
+  });
+};
+
 const getLighting = ({ light, sunlight }, neighbors) => neighbors.map((neighbors) => {
   let n1 = types[neighbors[0].type].hasAO;
   let n2 = types[neighbors[1].type].hasAO;
@@ -870,6 +883,23 @@ context.addEventListener('message', ({ data: message }) => {
     case 'sunlight':
       sunlightIntensity = message.intensity;
       remeshAll();
+      break;
+    case 'clone':
+      if (
+        message.from.y > 0 && message.from.y < maxHeight
+        && message.to.y > 0 && message.to.y < maxHeight
+      ) {
+        const chunk = clone(message.from, message.to);
+        [
+          chunk,
+          ...chunkNeighbors.map(({ x, z }) => ({
+            x: chunk.x + x,
+            z: chunk.z + z,
+          })),
+        ].forEach((chunk) => (
+          remeshDebounced(chunk.x, chunk.z)
+        ));
+      }
       break;
     case 'update':
       if (message.update.y > 0 && message.update.y < maxHeight) {

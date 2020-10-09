@@ -159,16 +159,58 @@
     });
   };
   
+  const helpers = {
+    box(x, y, z, w, h, l, type) {
+      x = Math.floor(x);
+      y = Math.floor(y);
+      z = Math.floor(z);
+      for (let i = 0; i < w; i += 1) {
+        for (let j = 0; j < h; j += 1) {
+          for (let k = 0; k < l; k += 1) {
+            helpers.update(x + i, y + j, z + k, type);
+          }
+        }
+      }
+    },
+    clone(fromX, fromY, fromZ, toX, toY, toZ) {
+      worker.postMessage({
+        type: 'clone',
+        from: { x: fromX, y: fromY + 1, z: fromZ },
+        to: { x: toX, y: toY + 1, z: toZ },
+      });
+    },
+    reset,
+    sphere(x, y, z, r, type) {
+      x = Math.floor(x);
+      y = Math.floor(y);
+      z = Math.floor(z);
+      const l = Math.ceil(Math.sqrt((r ** 2) + (r ** 2) + (r ** 2)));
+      const s = r * 2;
+      for (let i = -l; i < l; i += 1) {
+        for (let j = -l; j < l; j += 1) {
+          for (let k = -l; k < l; k += 1) {
+            if (Math.sqrt(((i - 0.5) ** 2) + ((j - 0.5) ** 2) + ((k - 0.5) ** 2)) < r) {
+              helpers.update(x + i, y + j, z + k, type);
+            }
+          }
+        }
+      }
+    },
+    update(x, y, z, type) {
+      worker.postMessage({
+        type: 'update',
+        update: { x, y: y + 1, z, type },
+      });
+    },
+  };
+
   export const runScript = () => (new Function([
-    'const [noise, update] = arguments;',
+    'const { noise, clone, box, reset, sphere, update } = arguments[0];',
     $script,
-  ].join('\n')))(
-    new SimplexNoise(),
-    (x, y, z, type) => worker.postMessage({
-      type: 'update',
-      update: { x, y: y + 1, z, type },
-    })
-  );
+  ].join('\n')))({
+    noise: new SimplexNoise(),
+    ...helpers,
+  });
 
   const exporter = new GLTFExporter();
   export const gltf = (download) => {
