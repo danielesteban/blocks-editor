@@ -724,7 +724,7 @@ const computePhysics = ({ offset = { x: -8, y: -1, z: -8 } }) => {
     x -= size * chunk.x;
     z -= size * chunk.z;
     const type = chunk.voxels[getIndex(x, y, z)];
-    return type !== 0 && types[type].model !== 'cross';
+    return type !== 0 && !types[type].isGhost && types[type].model !== 'cross';
   };
 
   const { min, max } = [...meshedChunks.values()].reduce(({ min, max }, { x, z }) => ({
