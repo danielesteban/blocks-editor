@@ -765,7 +765,7 @@ const computeLightmap = ({ offset = { x: -8, y: -1, z: -8 } }) => {
     data: btoa(lightmap.join('')),
     origin: {
       x: min.x + offset.x,
-      y: offset.y,
+      y: min.y + offset.y,
       z: min.z + offset.z,
     },
     size: volume,
