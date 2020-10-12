@@ -50,6 +50,9 @@
           })
         ));
         break;
+      case 'lightmap':
+        onLightmap(message.lightmap);
+        break;
       case 'physics':
         onPhysics(message.boxes);
         break;
@@ -72,8 +75,8 @@
   });
 
   $: worker.postMessage({
-    type: 'sunlight',
-    intensity: $lighting.sunlight,
+    type: 'lighting',
+    channels: $lighting,
   });
 
   const loader = document.createElement('input');
@@ -235,18 +238,43 @@
     }));
   };
 
-  let computing;
-  const onPhysics = (boxes) => {
-    const serialized = JSON.stringify(boxes);
-    computing.forEach((resolve) => resolve(serialized));
-    computing = undefined;
+  let computingLightmap;
+  const onLightmap = ({ data, origin, size }) => {
+    const serialized = JSON.stringify({ data, origin, size });
+    computingLightmap.forEach((resolve) => resolve(serialized));
+    computingLightmap = undefined;
   };
-  export const computePhysics = (download) => new Promise((resolve) => {
-    if (computing) {
-      computing.push(resolve);
+  export const computeLightmap = (download) => new Promise((resolve) => {
+    if (computingLightmap) {
+      computingLightmap.push(resolve);
       return;
     }
-    computing = [resolve];
+    computingLightmap = [resolve];
+    worker.postMessage({
+      type: 'computeLightmap',
+    });
+  })
+    .then((serialized) => {
+      if (download) {
+        downloader.download = `${download}.json`;
+        downloader.href = URL.createObjectURL(new Blob([serialized], { type: 'application/json' }));
+        downloader.click();
+      }
+      return serialized;
+    });
+
+  let computingPhysics;
+  const onPhysics = (boxes) => {
+    const serialized = JSON.stringify(boxes);
+    computingPhysics.forEach((resolve) => resolve(serialized));
+    computingPhysics = undefined;
+  };
+  export const computePhysics = (download) => new Promise((resolve) => {
+    if (computingPhysics) {
+      computingPhysics.push(resolve);
+      return;
+    }
+    computingPhysics = [resolve];
     worker.postMessage({
       type: 'computePhysics',
     });

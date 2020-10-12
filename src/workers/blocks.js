@@ -15,7 +15,7 @@ const textureWidth = 16;
 const textureHeight = 16;
 
 const chunks = new Map();
-let sunlightIntensity = 1;
+const lightChannels = { light: 1, sunlight: 1 };
 let types;
 
 const allocate = (cx, cz) => {
@@ -289,7 +289,7 @@ const getLighting = ({ light, sunlight }, neighbors) => neighbors.map((neighbors
   let n2 = types[neighbors[1].type].hasAO;
   let n3 = (n1 && n2) || types[neighbors[2].type].hasAO;
   const ao = [n1, n2, n3].reduce((ao, n) => (
-    ao - (n ? 0.2 : 0)
+    ao - (n ? 0.1 : 0)
   ), 1);
   let c = 1;
   let l = light;
@@ -306,8 +306,8 @@ const getLighting = ({ light, sunlight }, neighbors) => neighbors.map((neighbors
   });
   return (
     Math.max(
-      Math.max(l, s * sunlightIntensity) / c / maxLight,
-      0.05
+      Math.max(l * lightChannels.light, s * lightChannels.sunlight) / c / maxLight,
+      0.01
     ) * ao
   );
 });
@@ -572,8 +572,8 @@ const mesh = (cx, cz) => {
     const cross = (x, y, z, { type, light, sunlight }) => {
       const lighting = (() => {
         const lighting = Math.max(
-          Math.max(light, sunlight * sunlightIntensity) / maxLight,
-          0.05
+          Math.max(light * lightChannels.light, sunlight * lightChannels.sunlight) / maxLight,
+          0.01
         );
         return [...Array(4)].map(() => lighting);
       })();
@@ -689,25 +689,72 @@ const remeshDebounced = (() => {
   };
 })();
 
-const remeshAll = (() => {
-  let debounce;
-  const remeshAll = () => {
-    const list = [...meshedChunks.values()];
-    if (!list.length) {
-      remesh(0, 0);
-      return;
+const remeshAll = () => {
+  const list = [...meshedChunks.values()];
+  if (!list.length) {
+    remeshDebounced(0, 0);
+    return;
+  }
+  list.forEach((chunk) => (
+    remeshDebounced(chunk.x, chunk.z)
+  ));
+};
+
+const computeLightmap = ({ offset = { x: -8, y: -1, z: -8 } }) => {
+  const getLight = (x, y, z) => {
+    const cx = Math.floor(x / size);
+    const cz = Math.floor(z / size);
+    const key = `${cx}:${cz}`;
+    const chunk = meshedChunks.get(key);
+    if (!chunk) {
+      return 0;
     }
-    list.forEach((chunk) => (
-      remesh(chunk.x, chunk.z)
-    ));
-  };
-  return () => {
-    if (debounce) {
-      clearTimeout(debounce);
+    x -= size * chunk.x;
+    z -= size * chunk.z;
+    const voxel = getIndex(x, y, z);
+    const type = types[chunk.voxels[voxel]];
+    if (!type.isTranslucent) {
+      return 0;
     }
-    debounce = setTimeout(remeshAll, 0);
+    return Math.floor((Math.max(
+      chunk.voxels[voxel + fields.light] * lightChannels.light,
+      chunk.voxels[voxel + fields.sunlight] * lightChannels.sunlight
+    ) * 0xFF) / maxLight);
   };
-})();
+
+  const { min, max } = [...meshedChunks.values()].reduce(({ min, max }, { x, z }) => ({
+    min: { x: Math.min(min.x, x * size), z: Math.min(min.z, z * size) },
+    max: { x: Math.max(max.x, (x + 1) * size), z: Math.max(max.z, (z + 1) * size) },
+  }), { min: { x: Infinity, z: Infinity }, max: { x: -Infinity, z: -Infinity } });
+
+  const volume = {
+    x: max.x - min.x,
+    y: maxHeight,
+    z: max.z - min.z,
+  };
+
+  const lightmap = Array(volume.x * volume.y * volume.z);
+
+  // eslint-disable-next-line prefer-destructuring
+  for (let z = min.z, i = 0; z < max.z; z += 1) {
+    for (let y = 0; y < maxHeight; y += 1) {
+      // eslint-disable-next-line prefer-destructuring
+      for (let x = min.x; x < max.x; x += 1, i += 1) {
+        lightmap[i] = String.fromCharCode(getLight(x, y, z));
+      }
+    }
+  }
+
+  return {
+    data: btoa(lightmap.join('')),
+    origin: {
+      x: min.x + offset.x,
+      y: offset.y,
+      z: min.z + offset.z,
+    },
+    size: volume,
+  };
+};
 
 const computePhysics = ({ offset = { x: -8, y: -1, z: -8 } }) => {
   const hasMass = (x, y, z) => {
@@ -890,8 +937,9 @@ context.addEventListener('message', ({ data: message }) => {
       remeshAll();
       break;
     }
-    case 'sunlight':
-      sunlightIntensity = message.intensity;
+    case 'lighting':
+      lightChannels.light = message.channels.light;
+      lightChannels.sunlight = message.channels.sunlight;
       remeshAll();
       break;
     case 'clone':
@@ -994,6 +1042,12 @@ context.addEventListener('message', ({ data: message }) => {
             voxels: btoa(String.fromCharCode.apply(null, data)),
           };
         }),
+      });
+      break;
+    case 'computeLightmap':
+      context.postMessage({
+        type: 'lightmap',
+        lightmap: computeLightmap(message),
       });
       break;
     case 'computePhysics':

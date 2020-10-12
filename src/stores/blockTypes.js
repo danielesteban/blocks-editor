@@ -230,7 +230,8 @@ export default () => {
   })();
   types.reset();
   const lighting = writable({
-    sunlight: 0.5,
+    light: 0.75,
+    sunlight: 0.75,
   });
   return {
     atlas,

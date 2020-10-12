@@ -5,6 +5,8 @@
   
   const onLoad = () => blocks.load();
 
+  const onLightmap = () => blocks.computeLightmap('lightmap');
+
   const onPhysics = () => blocks.computePhysics('physics');
 
   const onReset = () => {
@@ -32,6 +34,9 @@
   <div>
     <button on:click={onExport}>
       Export Model
+    </button>
+    <button on:click={onLightmap}>
+      Export Lightmap
     </button>
     <button on:click={onPhysics}>
       Export Physics
