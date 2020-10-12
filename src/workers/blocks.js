@@ -722,14 +722,29 @@ const computeLightmap = ({ offset = { x: -8, y: -1, z: -8 } }) => {
     ) * 0xFF) / maxLight);
   };
 
-  const { min, max } = [...meshedChunks.values()].reduce(({ min, max }, { x, z }) => ({
-    min: { x: Math.min(min.x, x * size), z: Math.min(min.z, z * size) },
-    max: { x: Math.max(max.x, (x + 1) * size), z: Math.max(max.z, (z + 1) * size) },
-  }), { min: { x: Infinity, z: Infinity }, max: { x: -Infinity, z: -Infinity } });
+  const { min, max } = [...meshedChunks.values()].reduce(({ min, max }, { x, z, heightmap }) => {
+    const height = heightmap.reduce((max, height) => Math.max(max, height), 0);
+    return {
+      min: {
+        x: Math.min(min.x, x * size),
+        y: 0,
+        z: Math.min(min.z, z * size),
+      },
+      max: {
+        x: Math.max(max.x, (x + 1) * size),
+        y: Math.max(max.y, height),
+        z: Math.max(max.z, (z + 1) * size),
+      },
+    };
+  }, {
+    min: { x: Infinity, y: 0, z: Infinity },
+    max: { x: -Infinity, y: 0, z: -Infinity },
+  });
+  max.y = Math.ceil((max.y + size * 0.5) / size) * size;
 
   const volume = {
     x: max.x - min.x,
-    y: maxHeight,
+    y: max.y - min.y,
     z: max.z - min.z,
   };
 
@@ -737,7 +752,8 @@ const computeLightmap = ({ offset = { x: -8, y: -1, z: -8 } }) => {
 
   // eslint-disable-next-line prefer-destructuring
   for (let z = min.z, i = 0; z < max.z; z += 1) {
-    for (let y = 0; y < maxHeight; y += 1) {
+    // eslint-disable-next-line prefer-destructuring
+    for (let y = min.y; y < max.y; y += 1) {
       // eslint-disable-next-line prefer-destructuring
       for (let x = min.x; x < max.x; x += 1, i += 1) {
         lightmap[i] = String.fromCharCode(getLight(x, y, z));
