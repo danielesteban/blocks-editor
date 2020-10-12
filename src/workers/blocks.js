@@ -307,7 +307,7 @@ const getLighting = ({ light, sunlight }, neighbors) => neighbors.map((neighbors
   return (
     Math.max(
       Math.max(l * lightChannels.light, s * lightChannels.sunlight) / c / maxLight,
-      0.01
+      0.02
     ) * ao
   );
 });
@@ -573,7 +573,7 @@ const mesh = (cx, cz) => {
       const lighting = (() => {
         const lighting = Math.max(
           Math.max(light * lightChannels.light, sunlight * lightChannels.sunlight) / maxLight,
-          0.01
+          0.02
         );
         return [...Array(4)].map(() => lighting);
       })();
