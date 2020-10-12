@@ -5,9 +5,11 @@
 
 #### Examples
 
- * [multiplayer-boilerplate](https://multiplayer-boilerplate.glitch.me/)
- * [physics-boilerplate](https://physics-boilerplate.glitch.me/)
- * [physics-boilerplate-2](https://physics-boilerplate-2.glitch.me/)
+ * [lightmap-boilerplate](https://lightmap-boilerplate.glitch.me/) - VR + model loading + physics + lightmap
+ * [space-train](https://space-train.glitch.me/) - VR + model loading
+ * [multiplayer-boilerplate](https://multiplayer-boilerplate.glitch.me/) - VR + model loading + multiplayer server
+ * [physics-boilerplate](https://physics-boilerplate.glitch.me/) - VR + model loading + physics
+ * [physics-boilerplate-2](https://physics-boilerplate-2.glitch.me/) - VR + model loading + physics with multiple models/scales
 
 #### Local development
 
