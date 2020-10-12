@@ -3,11 +3,11 @@
 
 [![screenshot](screenshot.png)](https://blocks-editor.gatunes.com/)
 
-#### Examples
+#### Usage examples
 
  * [lightmap-boilerplate](https://lightmap-boilerplate.glitch.me/) - VR + model loading + physics + lightmap
- * [space-train](https://space-train.glitch.me/) - VR + model loading
  * [multiplayer-boilerplate](https://multiplayer-boilerplate.glitch.me/) - VR + model loading + multiplayer server
+ * [space-train](https://space-train.glitch.me/) - VR + model loading
  * [physics-boilerplate](https://physics-boilerplate.glitch.me/) - VR + model loading + physics
  * [physics-boilerplate-2](https://physics-boilerplate-2.glitch.me/) - VR + model loading + physics with multiple models/scales
 
