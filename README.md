@@ -5,6 +5,7 @@
 
 #### Usage examples
 
+ * [ar-boilerplate](https://ar-boilerplate.glitch.me/) - AR + model loading + physics + lightmap
  * [lightmap-boilerplate](https://lightmap-boilerplate.glitch.me/) - VR + model loading + physics + lightmap
  * [multiplayer-boilerplate](https://multiplayer-boilerplate.glitch.me/) - VR + model loading + multiplayer server
  * [space-train](https://space-train.glitch.me/) - VR + model loading
