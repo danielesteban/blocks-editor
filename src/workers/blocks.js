@@ -330,20 +330,16 @@ const getVoxelData = (origin) => {
 };
 
 const isVisible = (type, neighbor) => (
-  !types[type].isCulled
-  || !types[neighbor].isCulled
-  || (
-    types[neighbor].isGhost
-    && (
-      !types[type].isGhost
-      || type !== neighbor
-    )
-  )
-  || (
-    types[neighbor].isTransparent
-    && (
-      !types[type].isTransparent
-      || type !== neighbor
+  (types[type].isGhost || !types[neighbor].isGhost)
+  && (
+    !types[type].isCulled
+    || !types[neighbor].isCulled
+    || (
+      types[neighbor].isTransparent
+      && (
+        !types[type].isTransparent
+        || type !== neighbor
+      )
     )
   )
 );
