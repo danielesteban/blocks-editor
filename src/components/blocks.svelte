@@ -20,7 +20,7 @@
   let isLocked;
   let scene;
 
-  const initialPosition = { x: 8, y: 8, z: 32 };
+  const initialPosition = { x: 0, y: 8, z: 24 };
   const worker = new Worker('blocks.worker.js');
   const subchunks = new Map();
   const children = [];

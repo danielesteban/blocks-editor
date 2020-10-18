@@ -132,7 +132,7 @@ class Voxels extends Group {
     this.updateMatrix();
   }
 
-  clone(materials, offset = new Vector3(-8, 0, -8)) {
+  clone(materials, offset = new Vector3(0, 0, 0)) {
     const { meshes, position, scale } = this;
     const clone = new Group();
     clone.position.copy(position).add(offset);

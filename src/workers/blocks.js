@@ -696,7 +696,7 @@ const remeshAll = () => {
   ));
 };
 
-const computeLightmap = ({ offset = { x: -8, y: -1, z: -8 } }) => {
+const computeLightmap = ({ offset = { x: 0, y: -1, z: 0 } }) => {
   const getLight = (x, y, z) => {
     const cx = Math.floor(x / size);
     const cz = Math.floor(z / size);
@@ -768,7 +768,7 @@ const computeLightmap = ({ offset = { x: -8, y: -1, z: -8 } }) => {
   };
 };
 
-const computePhysics = ({ offset = { x: -8, y: -1, z: -8 } }) => {
+const computePhysics = ({ offset = { x: 0, y: -1, z: 0 } }) => {
   const hasMass = (x, y, z) => {
     if (y < 0 || y >= maxHeight) {
       return false;
