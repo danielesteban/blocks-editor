@@ -53,14 +53,13 @@
 
 <style>
   app {
-    display: flex;
-    flex-direction: column;
+    display: block;
     height: 100vh;
   }
 
   route {
-    flex-grow: 1;
     display: block;
+    height: calc(100vh - 40px);
     overflow: overlay;
   }
 
