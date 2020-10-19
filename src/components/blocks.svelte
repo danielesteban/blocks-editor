@@ -201,6 +201,9 @@
       }
     },
     update(x, y, z, type) {
+      if (typeof type === 'function') {
+        type = type(x, y, z);
+      }
       worker.postMessage({
         type: 'update',
         update: { x, y: y + 1, z, type },
