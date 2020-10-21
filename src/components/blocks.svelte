@@ -179,8 +179,16 @@
     clone(fromX, fromY, fromZ, toX, toY, toZ) {
       worker.postMessage({
         type: 'clone',
-        from: { x: fromX, y: fromY + 1, z: fromZ },
-        to: { x: toX, y: toY + 1, z: toZ },
+        from: {
+          x: Math.floor(fromX),
+          y: Math.floor(fromY) + 1,
+          z: Math.floor(fromZ),
+        },
+        to: {
+          x: Math.floor(toX),
+          y: Math.floor(toY) + 1,
+          z: Math.floor(toZ),
+        },
       });
     },
     reset,
@@ -201,6 +209,9 @@
       }
     },
     update(x, y, z, type) {
+      x = Math.floor(x);
+      y = Math.floor(y);
+      z = Math.floor(z);
       if (typeof type === 'function') {
         type = type(x, y, z);
       }
