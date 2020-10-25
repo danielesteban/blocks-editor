@@ -768,7 +768,7 @@ const computeLightmap = ({ offset = { x: 0, y: -1, z: 0 } }) => {
   };
 };
 
-const computePhysics = ({ offset = { x: 0, y: -1, z: 0 } }) => {
+const computePhysics = ({ includeGhost = true, offset = { x: 0, y: -1, z: 0 } }) => {
   const hasMass = (x, y, z) => {
     if (y < 0 || y >= maxHeight) {
       return false;
@@ -783,7 +783,7 @@ const computePhysics = ({ offset = { x: 0, y: -1, z: 0 } }) => {
     x -= size * chunk.x;
     z -= size * chunk.z;
     const type = chunk.voxels[getIndex(x, y, z)];
-    return type !== 0 && !types[type].isGhost && types[type].model !== 'cross';
+    return type !== 0 && (includeGhost || !types[type].isGhost) && types[type].model !== 'cross';
   };
 
   const { min, max } = [...meshedChunks.values()].reduce(({ min, max }, { x, z }) => ({
