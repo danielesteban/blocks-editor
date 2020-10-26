@@ -6,7 +6,9 @@
   export let brush;
   export let color;
   export let noise;
+  export let isPicking;
   export let isTransparent;
+  export let pickColor;
   export let pixels;
   export let showGrid;
 
@@ -109,6 +111,15 @@
     const x = Math.floor(((clientX - rect.left) / (rect.right - rect.left) * canvas.width) / scale.x);
     const y = Math.floor(((clientY - rect.top) / (rect.bottom - rect.top) * canvas.height) / scale.y);
     const pixel = ((size.x * y) + x) * 4;
+    if (isPicking) {
+      pickColor([
+        pixels[pixel],
+        pixels[pixel + 1],
+        pixels[pixel + 2],
+        pixels[pixel + 3],
+      ]);
+      return;
+    }
     if (pixel !== lastPixel) {
       lastPixel = pixel;
       brushOffsets.forEach((offset) => {

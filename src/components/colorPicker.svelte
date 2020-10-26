@@ -6,7 +6,7 @@
   export let enableOpacity;
 
   const width = 320;
-  const height = 300;
+  const height = 266;
 
   const area = {
     x: 16,
@@ -142,6 +142,46 @@
   <tools>
     <div><Color color={current} /></div>
     <label>
+      <input
+        type="number"
+        min={2}
+        max={0xFF}
+        step={1}
+        value={$colors.current[0]}
+        on:change={({ target: { value } }) => { colors.setColor([parseInt(value, 10), $colors.current[1], $colors.current[2]], true); }}
+      />
+    </label>
+    <label>
+      <input
+        type="number"
+        min={0}
+        max={0xFF}
+        step={1}
+        value={$colors.current[1]}
+        on:change={({ target: { value } }) => { colors.setColor([$colors.current[0], parseInt(value, 10), $colors.current[2]], true); }}
+      />
+    </label>
+    <label>
+      <input
+        type="number"
+        min={0}
+        max={0xFF}
+        step={1}
+        value={$colors.current[2]}
+        on:change={({ target: { value } }) => { colors.setColor([$colors.current[0], $colors.current[1], parseInt(value, 10)], true); }}
+      />
+    </label>
+    <div>
+      <button
+        class:primary={$colors.picking}
+        on:click={() => colors.setPicking(!$colors.picking)}
+      >
+        Pick
+      </button>
+    </div>
+  </tools>
+  <tools>
+    <label>
       Size:
       <input
         type="range"
@@ -204,7 +244,7 @@
 
   tools {
     box-sizing: border-box;
-    padding: 0.75rem;
+    padding: 0.5rem 0.75rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -220,8 +260,18 @@
     align-items: center;
   }
 
+  tools > div > button {
+    padding: 0.25rem 0.5rem;
+    text-transform: uppercase;
+  }
+
+  tools > label > input[type="number"] {
+    padding: 0 0.5rem;
+    margin: 0 0.25rem;
+  }
+
   tools > label > input[type="range"] {
-    width: 3rem;
+    width: 3.5rem;
   }
 
   canvas {

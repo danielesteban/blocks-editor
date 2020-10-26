@@ -34,6 +34,11 @@
       colors.addToPalette($colors.current);
     }
   };
+
+  const pickColor = (rgba) => {
+    colors.setColor(rgba, true);
+    colors.setPicking(false);
+  };
 </script>
 
 <block>
@@ -113,8 +118,10 @@
     <Pixels
       brush={$colors.brush}
       color={$colors.current}
+      isPicking={$colors.picking}
       isTransparent={type.isTransparent}
       noise={$colors.noise}
+      pickColor={pickColor}
       pixels={pixels}
       on:update={onTextureUpdate}
       showGrid

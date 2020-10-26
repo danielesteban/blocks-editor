@@ -6,6 +6,7 @@ export default () => {
     brush: 2,
     current: [0xFF, 0, 0, 0xFF],
     noise: 0,
+    picking: false,
     palette: [...Array(8)].map(() => [0, 0, 0, 127]),
   });
   return {
@@ -45,6 +46,12 @@ export default () => {
       update((colors) => ({
         ...colors,
         noise,
+      }));
+    },
+    setPicking(enabled) {
+      update((colors) => ({
+        ...colors,
+        picking: enabled,
       }));
     },
   };
