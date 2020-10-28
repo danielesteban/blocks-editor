@@ -5,6 +5,7 @@
 
 #### Usage examples
 
+ * [blocks-editor-examples](https://github.com/danielesteban/blocks-editor-examples) A combined set of examples
  * [ar-boilerplate](https://ar-boilerplate.glitch.me/) - AR + model loading + physics + lightmap
  * [lightmap-boilerplate](https://lightmap-boilerplate.glitch.me/) - VR + model loading + physics + lightmap
  * [multiplayer-boilerplate](https://multiplayer-boilerplate.glitch.me/) - VR + model loading + multiplayer server
