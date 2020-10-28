@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { Vector3 } from 'three';
   import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
-  import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise';
+  import SimplexNoise from 'simplex-noise';
   import DesktopControls from './controls.svelte';
   import Help from './help.svelte';
   import Renderer from './renderer.svelte';
@@ -223,10 +223,10 @@
   };
 
   export const runScript = () => (new Function([
-    'const { noise, clone, box, reset, sphere, update } = arguments[0];',
+    'const { SimplexNoise, clone, box, reset, sphere, update } = arguments[0];',
     $script,
   ].join('\n')))({
-    noise: new SimplexNoise(),
+    SimplexNoise,
     ...helpers,
   });
 

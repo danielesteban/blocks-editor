@@ -14,6 +14,7 @@
   "dependencies": {
     "codemirror": "^5.58.2",
     "express": "^4.17.1",
+    "simplex-noise": "^2.4.0",
     "svelte": "^3.29.4",
     "three": "^0.122.0"
   },
