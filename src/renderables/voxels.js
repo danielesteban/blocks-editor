@@ -128,7 +128,7 @@ class Voxels extends Group {
       this.add(this.meshes[key]);
     });
     this.subchunk = subchunk;
-    this.position.set(subchunk.x * 16, -1, subchunk.z * 16);
+    this.position.set(subchunk.x * 16, 0, subchunk.z * 16);
     this.updateMatrix();
   }
 

@@ -312,12 +312,18 @@ const getLighting = ({ light, sunlight }, neighbors) => neighbors.map((neighbors
   );
 });
 
-const edge = { type: 0, light: 0, sunlight: maxLight };
+const edges = {
+  top: { type: 0, light: 0, sunlight: maxLight },
+  bottom: { type: 0, light: 0, sunlight: 0 },
+};
 const getVoxelData = (origin) => {
   const getChunk = getVoxelChunk(origin);
   return (x, y, z) => {
-    if (y < 0 || y >= maxHeight) {
-      return edge;
+    if (y < 0) {
+      return edges.bottom;
+    }
+    if (y >= maxHeight) {
+      return edges.top;
     }
     const { chunk, cx, cz } = getChunk(x, z);
     const i = getIndex(cx, y, cz);
@@ -696,7 +702,7 @@ const remeshAll = () => {
   ));
 };
 
-const computeLightmap = ({ offset = { x: 0, y: -1, z: 0 } }) => {
+const computeLightmap = ({ offset = { x: 0, y: 0, z: 0 } }) => {
   const getLight = (x, y, z) => {
     const cx = Math.floor(x / size);
     const cz = Math.floor(z / size);
@@ -768,7 +774,7 @@ const computeLightmap = ({ offset = { x: 0, y: -1, z: 0 } }) => {
   };
 };
 
-const computePhysics = ({ includeGhost = true, offset = { x: 0, y: -1, z: 0 } }) => {
+const computePhysics = ({ includeGhost = true, offset = { x: 0, y: 0, z: 0 } }) => {
   const hasMass = (x, y, z) => {
     if (y < 0 || y >= maxHeight) {
       return false;
@@ -897,7 +903,15 @@ context.addEventListener('message', ({ data: message }) => {
               };
             }),
           })),
+        {
+          name: 'Bedrock',
+          hasAO: true,
+          isCulled: true,
+          isLight: false,
+          isTranslucent: false,
+        },
       ];
+      edges.bottom.type = types.length - 1;
       if (previousTypes) {
         let repropagate = false;
         let remap = false;
@@ -956,8 +970,8 @@ context.addEventListener('message', ({ data: message }) => {
       break;
     case 'clone':
       if (
-        message.from.y > 0 && message.from.y < maxHeight
-        && message.to.y > 0 && message.to.y < maxHeight
+        message.from.y >= 0 && message.from.y < maxHeight
+        && message.to.y >= 0 && message.to.y < maxHeight
       ) {
         const chunk = clone(message.from, message.to);
         [
@@ -972,7 +986,7 @@ context.addEventListener('message', ({ data: message }) => {
       }
       break;
     case 'update':
-      if (message.update.y > 0 && message.update.y < maxHeight) {
+      if (message.update.y >= 0 && message.update.y < maxHeight) {
         const chunk = update(message.update);
         [
           chunk,
@@ -987,7 +1001,7 @@ context.addEventListener('message', ({ data: message }) => {
       break;
     case 'pick': {
       const { block } = message;
-      if (block.y > 0 && block.y < maxHeight) {
+      if (block.y >= 0 && block.y < maxHeight) {
         const chunk = getChunk(
           Math.floor(block.x / size),
           Math.floor(block.z / size)

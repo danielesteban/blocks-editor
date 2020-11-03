@@ -181,12 +181,12 @@
         type: 'clone',
         from: {
           x: Math.floor(fromX),
-          y: Math.floor(fromY) + 1,
+          y: Math.floor(fromY),
           z: Math.floor(fromZ),
         },
         to: {
           x: Math.floor(toX),
-          y: Math.floor(toY) + 1,
+          y: Math.floor(toY),
           z: Math.floor(toZ),
         },
       });
@@ -217,7 +217,7 @@
       }
       worker.postMessage({
         type: 'update',
-        update: { x, y: y + 1, z, type },
+        update: { x, y, z, type },
       });
     },
   };
@@ -364,7 +364,7 @@
         type: 'pick',
         block: {
           x: block.x,
-          y: block.y + 1,
+          y: block.y,
           z: block.z,
         },
       });
@@ -374,7 +374,7 @@
       type: 'update',
       update: {
         x: block.x,
-        y: block.y + 1,
+        y: block.y,
         z: block.z,
         type: isRemoving ? 0 : selected + 1,
       },
