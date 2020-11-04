@@ -191,13 +191,40 @@
         },
       });
     },
+    cylinder(x, y, z, axis, r, h, type) {
+      x = Math.floor(x);
+      y = Math.floor(y);
+      z = Math.floor(z);
+      const l = Math.ceil(Math.sqrt((r ** 2) + (r ** 2) + (r ** 2)));
+      switch (axis) {
+        default:
+        case 'x':
+          axis = [2, 1, 0];
+          break;
+        case 'y':
+          axis = [0, 2, 1];
+          break;
+        case 'z':
+          axis = [0, 1, 2];
+          break;
+      }
+      for (let i = -l; i < l; i += 1) {
+        for (let j = -l; j < l; j += 1) {
+          if (Math.sqrt(((i - 0.5) ** 2) + ((j - 0.5) ** 2)) < r) {
+            for (let k = 0; k < h; k += 1) {
+              const p = [i, j, k];
+              helpers.update(x + p[axis[0]], y + p[axis[1]], z + p[axis[2]], type);
+            }
+          }
+        }
+      }
+    },
     reset,
     sphere(x, y, z, r, type) {
       x = Math.floor(x);
       y = Math.floor(y);
       z = Math.floor(z);
       const l = Math.ceil(Math.sqrt((r ** 2) + (r ** 2) + (r ** 2)));
-      const s = r * 2;
       for (let i = -l; i < l; i += 1) {
         for (let j = -l; j < l; j += 1) {
           for (let k = -l; k < l; k += 1) {
@@ -223,7 +250,7 @@
   };
 
   export const runScript = () => (new Function([
-    'const { SimplexNoise, clone, box, reset, sphere, update } = arguments[0];',
+    'const { SimplexNoise, clone, cylinder, box, reset, sphere, update } = arguments[0];',
     $script,
   ].join('\n')))({
     SimplexNoise,
