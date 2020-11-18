@@ -1,4 +1,5 @@
 <script>
+  import { onDestroy } from 'svelte';
   import ColorPicker from './colorPicker.svelte';
   import Pixels from './pixels.svelte';
 
@@ -15,6 +16,61 @@
     texture = 'top';
   }
   $: pixels = typeTextures[texture];
+
+  const downloader = document.createElement('a');
+  downloader.style.display = 'none';
+  document.body.appendChild(downloader);
+
+  const loader = document.createElement('input');
+  loader.accept = 'image/*';
+  loader.type = 'file';
+  loader.style.display = 'none';
+  document.body.appendChild(loader);
+
+  onDestroy(() => {
+    document.body.removeChild(loader);
+    document.body.removeChild(downloader);
+  });
+
+  const image = new ImageData(16, 16);
+  const renderer = document.createElement('canvas');
+  renderer.width = 16;
+  renderer.height = 16;
+  const ctx = renderer.getContext('2d');
+
+  const onExport = () => {
+    for (let i = 0, y = 0; y < 16; y += 1) {
+      for (let x = 0; x < 16; x += 1, i += 4) {
+        image.data[i] = pixels[i];
+        image.data[i + 1] = pixels[i + 1];
+        image.data[i + 2] = pixels[i + 2];
+        image.data[i + 3] = type.isTransparent ? pixels[i + 3] : 0xFF;
+      }
+    }
+    ctx.putImageData(image, 0, 0);
+    renderer.toBlob((blob) => {
+      downloader.download = `${type.name} - ${texture}.png`;
+      downloader.href = URL.createObjectURL(blob);
+      downloader.click();
+    });
+  };
+
+  const onImport = () => {
+    loader.onchange = ({ target: { files: [file] } }) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const image = new Image();
+        image.onload = () => {
+          ctx.drawImage(image, 0, 0, 16, 16);
+          textures.update($editor, texture, ctx.getImageData(0, 0, 16, 16).data);
+        };
+        image.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+      loader.value = null;
+    };
+    loader.click();
+  };
 
   let lastColor;
   const onTextureUpdate = ({ detail: pixels }) => {
@@ -128,6 +184,14 @@
     />
   </texture>
 </textures>
+<tools>
+  <button on:click={onImport}>
+    Import
+  </button>
+  <button on:click={onExport}>
+    Export
+  </button>
+</tools>
 <ColorPicker
   colors={colors}
   enableOpacity={type.isTransparent}
@@ -140,11 +204,22 @@
     background: #222;
   }
 
-  tabs {
+  tabs, tools {
     display: flex;
     align-items: center;
     background: #222;
     border-bottom: 2px solid #111;
+  }
+
+  tools {
+    justify-content: center;
+    padding: 0.25rem 0;
+    border-top: 2px solid #111;
+  }
+
+  tools > button {
+    margin: 0 0.5rem;
+    width: 8rem;
   }
 
   tab {

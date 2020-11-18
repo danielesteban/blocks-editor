@@ -6,7 +6,7 @@
   export let enableOpacity;
 
   const width = 320;
-  const height = 266;
+  const height = 230;
 
   const area = {
     x: 16,
