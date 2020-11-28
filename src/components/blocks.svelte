@@ -129,7 +129,7 @@
       chunks,
       lighting: $lighting,
       script: $script,
-    });
+    }, null, '  ');
     saving.forEach((resolve) => resolve(serialized));
     saving = undefined;
   };
