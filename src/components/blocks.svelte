@@ -43,7 +43,7 @@
         });
         children.length = 0;
         [...subchunks.values()].forEach(({ meshes }) => (
-          ['ghost', 'opaque', 'transparent'].forEach((key) => {
+          ['alpha', 'blending', 'ghost', 'opaque'].forEach((key) => {
             if (meshes[key].visible) {
               children.push(meshes[key]);
             }
@@ -101,9 +101,10 @@
         selected = 0;
         children.length = 0;
         [...subchunks.values()].forEach(({ meshes }) => {
+          meshes.alpha.visible = false;
+          meshes.blending.visible = false;
           meshes.ghost.visible = false;
           meshes.opaque.visible = false;
-          meshes.transparent.visible = false;
         });
         worker.postMessage({
           type: 'load',
@@ -154,9 +155,10 @@
   export const reset = () => {
     children.length = 0;
     [...subchunks.values()].forEach(({ meshes }) => {
+      meshes.alpha.visible = false;
+      meshes.blending.visible = false;
       meshes.ghost.visible = false;
       meshes.opaque.visible = false;
-      meshes.transparent.visible = false;
     });
     worker.postMessage({
       type: 'reset',
@@ -262,8 +264,8 @@
     const materials = Voxels.getExportableMaterials();
     return new Promise((resolve) => exporter.parse((
       [...subchunks.values()]
-        .filter(({ meshes: { opaque, transparent } }) => (
-          opaque.visible || transparent.visible
+        .filter(({ meshes: { alpha, blending, opaque } }) => (
+          alpha.visible || blending.visible || opaque.visible
         ))
         .map((mesh) => mesh.clone(materials))
     ), (buffer) => {

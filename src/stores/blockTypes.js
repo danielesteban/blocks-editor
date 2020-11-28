@@ -106,9 +106,10 @@ export default () => {
         update((types) => [...types, {
           name: type.name || 'New Block',
           model: type.model || 'box',
+          hasAlpha: type.hasAlpha || false,
+          hasBlending: type.hasBlending || false,
           isGhost: false,
           isLight: type.isLight || false,
-          isTransparent: type.isTransparent || false,
           key,
         }]);
         key += 1;
@@ -128,15 +129,21 @@ export default () => {
         removeTextures(type);
       },
       update(type, key, value) {
+        const values = { [key]: value };
+        if (key === 'hasAlpha' && value) {
+          values.hasBlending = false;
+        } else if (key === 'hasBlending' && value) {
+          values.hasAlpha = false;
+        }
         update((types) => [
           ...types.slice(0, type),
           {
             ...types[type],
-            [key]: value,
+            ...values,
           },
           ...types.slice(type + 1),
         ]);
-        if (~['isGhost', 'isTransparent', 'model'].indexOf(key)) {
+        if (~['hasAlpha', 'hasBlending', 'isGhost', 'model'].indexOf(key)) {
           updateAtlas();
         }
       },
@@ -177,23 +184,37 @@ export default () => {
     updateAtlas = () => {
       const $textures = get(textures);
       const $types = get(types);
-      const materials = $types.reduce((materials, { model, isGhost, isTransparent }, i) => {
+      const materials = $types.reduce((
+        materials,
+        {
+          model,
+          hasAlpha,
+          hasBlending,
+          isGhost,
+        },
+        i
+      ) => {
         if (!isGhost) {
           const { bottom, side, top } = $textures[i];
-          const type = materials[isTransparent ? 'transparent' : 'opaque'];
-          type.push(top);
+          let material = materials.opaque;
+          if (hasAlpha) {
+            material = materials.alpha;
+          } else if (hasBlending) {
+            material = materials.blending;
+          }
+          material.push(top);
           if (model !== 'cross') {
-            type.push(side, bottom);
+            material.push(side, bottom);
           }
         }
         return materials;
-      }, { opaque: [], transparent: [] });
-      set(['opaque', 'transparent'].reduce((atlas, key) => {
+      }, { alpha: [], blending: [], opaque: [] });
+      set(['alpha', 'blending', 'opaque'].reduce((atlas, key) => {
         const slotWidth = textureWidth + 2;
-        const isTransparent = key === 'transparent';
+        const hasAlpha = key !== 'opaque';
         const width = materials[key].length * slotWidth;
         const height = textureHeight + 2;
-        const strideX = isTransparent ? 4 : 3;
+        const strideX = hasAlpha ? 4 : 3;
         const strideY = width * strideX;
         const pixels = new Uint8ClampedArray(strideY * height);
         materials[key].forEach((texture, i) => {
@@ -207,7 +228,7 @@ export default () => {
               pixels[p] = texture[j];
               pixels[p + 1] = texture[j + 1];
               pixels[p + 2] = texture[j + 2];
-              if (isTransparent) {
+              if (hasAlpha) {
                 pixels[p + 3] = texture[j + 3];
               }
               if (x !== 0 && x !== slotWidth - 2) {

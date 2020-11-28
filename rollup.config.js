@@ -2,7 +2,6 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import json from '@rollup/plugin-json';
-import livereload from 'rollup-plugin-livereload';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import copy from 'rollup-plugin-copy';
@@ -65,7 +64,7 @@ export default [
       }),
       json(),
       commonjs(),
-      css({ output: path.join(__dirname, 'dist', 'vendor.css') }),
+      css({ output: 'vendor.css' }),
       copy({
         targets: [
           { src: 'screenshot.png', dest: 'dist' },
@@ -73,7 +72,7 @@ export default [
           { src: 'src/index.css', dest: 'dist' },
         ],
       }),
-      ...(production ? [terser(), cname('blocks-editor.gatunes.com')] : [serve(), livereload(path.join(__dirname, 'dist'))]),
+      ...(production ? [terser(), cname('blocks-editor.gatunes.com')] : [serve()]),
     ],
   },
   ...workers.map((name) => ({

@@ -40,7 +40,7 @@
   >
     <texture>
       <Texture
-        isTransparent={type.isTransparent}
+        hasAlpha={type.hasAlpha || type.hasBlending}
         pixels={$textures[i].top}
       />
     </texture>
@@ -48,7 +48,8 @@
       <name>{type.name}</name>
       <modifiers>
         {[
-          ...(type.isTransparent ? ['transparent'] : []),
+          ...(type.hasAlpha ? ['alpha'] : []),
+          ...(type.hasBlending ? ['blending'] : []),
           ...(type.isLight ? ['emits light'] : []),
           ...(type.isGhost ? ['ghost'] : []),
         ].join(' | ')}

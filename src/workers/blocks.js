@@ -341,9 +341,9 @@ const isVisible = (type, neighbor) => (
     !types[type].isCulled
     || !types[neighbor].isCulled
     || (
-      types[neighbor].isTransparent
+      (types[neighbor].hasAlpha || types[neighbor].hasBlending)
       && (
-        !types[type].isTransparent
+        !(types[type].hasAlpha || types[type].hasBlending)
         || type !== neighbor
       )
     )
@@ -381,7 +381,7 @@ const mesh = (cx, cz) => {
   });
   const get = getVoxelData(chunk);
   return [...Array(subchunks)].map((v, subchunk) => {
-    const geometry = ['ghost', 'opaque', 'transparent'].reduce((meshes, key) => {
+    const geometry = ['alpha', 'blending', 'ghost', 'opaque'].reduce((meshes, key) => {
       meshes[key] = {
         color: [],
         position: [],
@@ -414,10 +414,12 @@ const mesh = (cx, cz) => {
         vertices.unshift(vertices.pop());
       }
       let mesh = geometry.opaque;
-      if (types[type].isGhost) {
+      if (types[type].hasAlpha) {
+        mesh = geometry.alpha;
+      } else if (types[type].hasBlending) {
+        mesh = geometry.blending;
+      } else if (types[type].isGhost) {
         mesh = geometry.ghost;
-      } else if (types[type].isTransparent) {
-        mesh = geometry.transparent;
       }
       lighting.forEach((light) => mesh.color.push(light, light, light));
       uvs.forEach((uv) => mesh.uv.push(...uv));
@@ -571,7 +573,7 @@ const mesh = (cx, cz) => {
         );
       }
     };
-    const cross = (x, y, z, { type, light, sunlight }) => {
+    const cross = (x, y, z, { type, light, sunlight }, doubleSide) => {
       const lighting = (() => {
         const lighting = Math.max(
           Math.max(light * lightChannels.light, sunlight * lightChannels.sunlight) / maxLight,
@@ -597,24 +599,26 @@ const mesh = (cx, cz) => {
         lighting,
         6
       );
-      pushFace(
-        [x + 1, y, z + 1],
-        [x, y, z],
-        [x, y + 1, z],
-        [x + 1, y + 1, z + 1],
-        type,
-        lighting,
-        6
-      );
-      pushFace(
-        [x + 1, y, z],
-        [x, y, z + 1],
-        [x, y + 1, z + 1],
-        [x + 1, y + 1, z],
-        type,
-        lighting,
-        6
-      );
+      if (doubleSide) {
+        pushFace(
+          [x + 1, y, z + 1],
+          [x, y, z],
+          [x, y + 1, z],
+          [x + 1, y + 1, z + 1],
+          type,
+          lighting,
+          6
+        );
+        pushFace(
+          [x + 1, y, z],
+          [x, y, z + 1],
+          [x, y + 1, z + 1],
+          [x + 1, y + 1, z],
+          type,
+          lighting,
+          6
+        );
+      }
     };
     const fromY = subchunk * size;
     const toY = (subchunk + 1) * size;
@@ -625,7 +629,7 @@ const mesh = (cx, cz) => {
           if (voxel.type !== 0) {
             switch (types[voxel.type].model) {
               case 'cross':
-                cross(x, y, z, voxel);
+                cross(x, y, z, voxel, !types[voxel.type].hasAlpha);
                 break;
               default:
                 box(x, y, z, voxel.type);
@@ -635,7 +639,7 @@ const mesh = (cx, cz) => {
         }
       }
     }
-    return ['ghost', 'opaque', 'transparent'].reduce((meshes, key) => {
+    return ['alpha', 'blending', 'ghost', 'opaque'].reduce((meshes, key) => {
       const {
         color,
         position,
@@ -660,7 +664,7 @@ const remesh = (x, z) => {
     position: { x, z },
     subchunks,
   }, subchunks.reduce((buffers, meshes) => {
-    ['ghost', 'opaque', 'transparent'].forEach((mesh) => {
+    ['alpha', 'blending', 'ghost', 'opaque'].forEach((mesh) => {
       mesh = meshes[mesh];
       buffers.push(
         mesh.color.buffer,
@@ -861,7 +865,7 @@ context.addEventListener('message', ({ data: message }) => {
   switch (message.type) {
     case 'types': {
       const previousTypes = types;
-      const textures = { opaque: 0, transparent: 0 };
+      const textures = { alpha: 0, blending: 0, opaque: 0 };
       types = [
         {
           name: 'Air',
@@ -870,7 +874,12 @@ context.addEventListener('message', ({ data: message }) => {
         },
         ...message.types
           .map((type) => {
-            const material = type.isTransparent ? 'transparent' : 'opaque';
+            let material = 'opaque';
+            if (type.hasAlpha) {
+              material = 'alpha';
+            } else if (type.hasBlending) {
+              material = 'blending';
+            }
             const isCross = type.model === 'cross';
             const index = textures[material];
             if (!type.isGhost) {
@@ -880,7 +889,7 @@ context.addEventListener('message', ({ data: message }) => {
               ...type,
               hasAO: !isCross,
               isCulled: !isCross,
-              isTranslucent: isCross || type.isTransparent,
+              isTranslucent: isCross || type.hasAlpha || type.hasBlending,
               textures: isCross ? [index] : [
                 index,
                 index + 2,
@@ -894,7 +903,13 @@ context.addEventListener('message', ({ data: message }) => {
           .map((type) => ({
             ...type,
             textures: type.textures.map((index) => {
-              const slotSize = 1 / textures[type.isTransparent ? 'transparent' : 'opaque'];
+              let material = 'opaque';
+              if (type.hasAlpha) {
+                material = 'alpha';
+              } else if (type.hasBlending) {
+                material = 'blending';
+              }
+              const slotSize = 1 / textures[material];
               const slotPixel = slotSize / (textureWidth + 2);
               const from = (index * slotSize) + slotPixel;
               return {
@@ -931,9 +946,10 @@ context.addEventListener('message', ({ data: message }) => {
             const current = types[i];
             if (
               prev.model !== current.model
+              || prev.hasAlpha !== current.hasAlpha
+              || prev.hasBlending !== current.hasBlending
               || prev.isGhost !== current.isGhost
               || prev.isLight !== current.isLight
-              || prev.isTransparent !== current.isTransparent
             ) {
               repropagate = true;
               break;

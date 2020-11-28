@@ -2,6 +2,7 @@ import {
   BufferGeometry,
   CanvasTexture,
   DataTexture,
+  DoubleSide,
   Group,
   Mesh,
   BufferAttribute,
@@ -21,15 +22,20 @@ import {
 class Voxels extends Group {
   static setupMaterials() {
     Voxels.materials = {
+      alpha: new MeshBasicMaterial({
+        alphaTest: 1,
+        side: DoubleSide,
+        vertexColors: true,
+      }),
+      blending: new MeshBasicMaterial({
+        transparent: true,
+        vertexColors: true,
+      }),
       ghost: new MeshBasicMaterial({
         vertexColors: true,
         wireframe: true,
       }),
       opaque: new MeshBasicMaterial({
-        vertexColors: true,
-      }),
-      transparent: new MeshBasicMaterial({
-        transparent: true,
         vertexColors: true,
       }),
     };
@@ -40,20 +46,20 @@ class Voxels extends Group {
       Voxels.setupMaterials();
     }
     const { materials } = Voxels;
-    return ['opaque', 'transparent'].reduce((exported, key) => {
+    return ['alpha', 'blending', 'opaque'].reduce((exported, key) => {
       if (materials[key].map) {
         const { map: texture } = materials[key];
         const { image } = texture;
         const material = materials[key].clone();
         const data = new ImageData(image.width, image.height);
-        const isTransparent = texture.format === RGBAFormat;
-        const stride = isTransparent ? 4 : 3;
+        const hasAlpha = texture.format === RGBAFormat;
+        const stride = hasAlpha ? 4 : 3;
         const { length } = data.data;
         for (let i = 0, j = 0; i < length; i += 4, j += stride) {
           data.data[i] = image.data[j];
           data.data[i + 1] = image.data[j + 1];
           data.data[i + 2] = image.data[j + 2];
-          data.data[i + 3] = isTransparent ? image.data[j + 3] : 0xFF;
+          data.data[i + 3] = hasAlpha ? image.data[j + 3] : 0xFF;
         }
         const canvas = document.createElement('canvas');
         canvas.width = image.width;
@@ -84,7 +90,7 @@ class Voxels extends Group {
       Voxels.setupMaterials();
     }
     const { materials } = Voxels;
-    ['opaque', 'transparent'].forEach((key) => {
+    ['alpha', 'blending', 'opaque'].forEach((key) => {
       if (materials[key].map) {
         materials[key].map.dispose();
         materials[key].map = null;
@@ -97,7 +103,7 @@ class Voxels extends Group {
         pixels,
         width,
         height,
-        key === 'transparent' ? RGBAFormat : RGBFormat,
+        key === 'opaque' ? RGBFormat : RGBAFormat,
         UnsignedByteType,
         UVMapping,
         RepeatWrapping,
@@ -119,11 +125,12 @@ class Voxels extends Group {
     super();
     this.matrixAutoUpdate = false;
     this.meshes = {
+      alpha: new Mesh(new BufferGeometry(), Voxels.materials.alpha),
+      blending: new Mesh(new BufferGeometry(), Voxels.materials.blending),
       ghost: new Mesh(new BufferGeometry(), Voxels.materials.ghost),
       opaque: new Mesh(new BufferGeometry(), Voxels.materials.opaque),
-      transparent: new Mesh(new BufferGeometry(), Voxels.materials.transparent),
     };
-    ['ghost', 'opaque', 'transparent'].forEach((key) => {
+    ['alpha', 'blending', 'ghost', 'opaque'].forEach((key) => {
       this.meshes[key].matrixAutoUpdate = false;
       this.add(this.meshes[key]);
     });
@@ -137,7 +144,7 @@ class Voxels extends Group {
     const clone = new Group();
     clone.position.copy(position).add(offset);
     clone.scale.copy(scale);
-    ['opaque', 'transparent'].forEach((key) => {
+    ['alpha', 'blending', 'opaque'].forEach((key) => {
       const mesh = meshes[key];
       if (mesh.visible) {
         const cloned = mesh.clone();
@@ -155,7 +162,7 @@ class Voxels extends Group {
 
   update(geometries) {
     const { meshes } = this;
-    ['ghost', 'opaque', 'transparent'].forEach((key) => {
+    ['alpha', 'blending', 'ghost', 'opaque'].forEach((key) => {
       const {
         color,
         position,

@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
 
-  export let isTransparent;
+  export let hasAlpha;
   export let pixels;
 
   const size = { x: 16, y: 16 };
@@ -40,7 +40,7 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (let i = 0, y = 0; y < size.y; y += 1) {
       for (let x = 0; x < size.x; x += 1, i += 4) {
-        const alpha = isTransparent ? pixels[i + 3] / 0xFF : 1;
+        const alpha = hasAlpha ? pixels[i + 3] / 0xFF : 1;
         ctx.fillStyle = `rgba(${pixels[i]},${pixels[i + 1]},${pixels[i + 2]},${alpha})`;
         ctx.fillRect(
           x * scale.x, y * scale.y,

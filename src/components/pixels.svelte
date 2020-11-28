@@ -7,7 +7,7 @@
   export let color;
   export let noise;
   export let isPicking;
-  export let isTransparent;
+  export let hasAlpha;
   export let pickColor;
   export let pixels;
   export let showGrid;
@@ -66,21 +66,21 @@
   }
 
   let lastPixels;
-  let lastOpacity;
+  let lastAlpha;
   $: if (
     ctx
     && (
       pixels !== lastPixels
-      || isTransparent !== lastOpacity
+      || hasAlpha !== lastAlpha
     )
   ) {
     lastPixels = pixels;
-    lastOpacity = isTransparent;
+    lastAlpha = hasAlpha;
     lastPixel = undefined;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (let i = 0, y = 0; y < size.y; y += 1) {
       for (let x = 0; x < size.x; x += 1, i += 4) {
-        const alpha = isTransparent ? pixels[i + 3] / 0xFF : 1;
+        const alpha = hasAlpha ? pixels[i + 3] / 0xFF : 1;
         ctx.fillStyle = `rgba(${pixels[i]},${pixels[i + 1]},${pixels[i + 2]},${alpha})`;
         ctx.fillRect(
           x * scale.x, y * scale.y,
@@ -131,7 +131,7 @@
         const pixel = ((size.x * py) + px) * 4;
         const rgba = [
           ...color.slice(0, 3),
-          (isTransparent ? color[3] : 0xFF),
+          (hasAlpha ? color[3] : 0xFF),
         ];
         if (noise) {
           const intensity = ((color[0] + color[1] + color[2]) / 3) * noise * 2;
@@ -144,7 +144,7 @@
         pixels[pixel + 2] = rgba[2];
         pixels[pixel + 3] = rgba[3];
         ctx.fillStyle = `rgba(${rgba[0]},${rgba[1]},${rgba[2]},${rgba[3] / 0xFF})`;
-        if (isTransparent) {
+        if (hasAlpha) {
           ctx.clearRect(
             px * scale.x,
             py * scale.y,

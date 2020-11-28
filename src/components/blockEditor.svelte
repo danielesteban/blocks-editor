@@ -44,7 +44,7 @@
         image.data[i] = pixels[i];
         image.data[i + 1] = pixels[i + 1];
         image.data[i + 2] = pixels[i + 2];
-        image.data[i + 3] = type.isTransparent ? pixels[i + 3] : 0xFF;
+        image.data[i + 3] = (type.hasAlpha || type.hasBlending) ? pixels[i + 3] : 0xFF;
       }
     }
     ctx.putImageData(image, 0, 0);
@@ -107,7 +107,6 @@
   </name>
   <modifiers>
     <label>
-      Model:
       <!-- svelte-ignore a11y-no-onchange -->
       <select
         value={type.model}
@@ -132,10 +131,18 @@
     <label>
       <input
         type="checkbox"
-        checked={type.isTransparent}
-        on:change={({ target: { checked } }) => { types.update($editor, 'isTransparent', checked); }}
+        checked={type.hasAlpha}
+        on:change={({ target: { checked } }) => { types.update($editor, 'hasAlpha', checked); }}
       />
-      Transparent
+      Alpha
+    </label>
+    <label>
+      <input
+        type="checkbox"
+        checked={type.hasBlending}
+        on:change={({ target: { checked } }) => { types.update($editor, 'hasBlending', checked); }}
+      />
+      Blend
     </label>
     <label>
       <input
@@ -175,7 +182,7 @@
       brush={$colors.brush}
       color={$colors.current}
       isPicking={$colors.picking}
-      isTransparent={type.isTransparent}
+      hasAlpha={type.hasAlpha || type.hasBlending}
       noise={$colors.noise}
       pickColor={pickColor}
       pixels={pixels}
@@ -194,7 +201,7 @@
 </tools>
 <ColorPicker
   colors={colors}
-  enableOpacity={type.isTransparent}
+  enableOpacity={type.hasAlpha || type.hasBlending}
 />
 
 <style>
