@@ -212,7 +212,7 @@ export default () => {
       set(['alpha', 'blending', 'opaque'].reduce((atlas, key) => {
         const slotWidth = textureWidth + 2;
         const hasAlpha = key !== 'opaque';
-        const width = materials[key].length * slotWidth;
+        const width = Math.max(materials[key].length, 9) * slotWidth;
         const height = textureHeight + 2;
         const strideX = hasAlpha ? 4 : 3;
         const strideY = width * strideX;

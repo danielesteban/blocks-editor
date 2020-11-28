@@ -909,7 +909,7 @@ context.addEventListener('message', ({ data: message }) => {
               } else if (type.hasBlending) {
                 material = 'blending';
               }
-              const slotSize = 1 / textures[material];
+              const slotSize = 1 / Math.max(textures[material], 9);
               const slotPixel = slotSize / (textureWidth + 2);
               const from = (index * slotSize) + slotPixel;
               return {
