@@ -123,14 +123,6 @@
     <label>
       <input
         type="checkbox"
-        checked={type.isLight}
-        on:change={({ target: { checked } }) => { types.update($editor, 'isLight', checked); }}
-      />
-      Light
-    </label>
-    <label>
-      <input
-        type="checkbox"
         checked={type.hasAlpha}
         on:change={({ target: { checked } }) => { types.update($editor, 'hasAlpha', checked); }}
       />
@@ -151,6 +143,14 @@
         on:change={({ target: { checked } }) => { types.update($editor, 'isGhost', checked); }}
       />
       Ghost
+    </label>
+    <label>
+      <input
+        type="checkbox"
+        checked={type.isLight}
+        on:change={({ target: { checked } }) => { types.update($editor, 'isLight', checked); }}
+      />
+      Light
     </label>
   </modifiers>
 </block>
