@@ -1,4 +1,3 @@
-import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import json from '@rollup/plugin-json';
@@ -6,6 +5,8 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import copy from 'rollup-plugin-copy';
 import css from 'rollup-plugin-css-only';
+import livereload from 'rollup-plugin-livereload';
+import serve from 'rollup-plugin-serve';
 import svelte from 'rollup-plugin-svelte';
 import { terser } from 'rollup-plugin-terser';
 
@@ -16,28 +17,6 @@ const cname = (domain) => ({
     fs.writeFileSync(path.join(__dirname, 'dist', 'CNAME'), domain);
   },
 });
-
-const serve = () => {
-  let server;
-  const onExit = () => {
-    if (server) {
-      server.kill(0);
-    }
-  };
-  return {
-    writeBundle() {
-      if (server) {
-        return;
-      }
-      server = spawn('npm', ['run', 'serve'], {
-        stdio: ['ignore', 'inherit', 'inherit'],
-        shell: true,
-      });
-      process.on('SIGTERM', onExit);
-      process.on('exit', onExit);
-    },
-  };
-};
 
 const workersPath = path.join(__dirname, 'src', 'workers');
 const workers = fs.readdirSync(workersPath)
@@ -56,15 +35,14 @@ export default [
     plugins: [
       svelte({
         dev: !production,
-        css: (css) => css.write('app.css'),
       }),
+      css({ output: 'app.css' }),
       resolve({
         browser: true,
         dedupe: ['svelte'],
       }),
       json(),
       commonjs(),
-      css({ output: 'vendor.css' }),
       copy({
         targets: [
           { src: 'screenshot.png', dest: 'dist' },
@@ -72,7 +50,11 @@ export default [
           { src: 'src/index.css', dest: 'dist' },
         ],
       }),
-      ...(production ? [terser(), cname('blocks-editor.gatunes.com')] : [serve()]),
+      ...(production ? (
+        [terser(), cname('blocks-editor.gatunes.com')]
+      ) : (
+        [serve({ contentBase: path.join(__dirname, 'dist'), port: 8080 }), livereload(path.join(__dirname, 'dist'))])
+      ),
     ],
   },
   ...workers.map((name) => ({
