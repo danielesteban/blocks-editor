@@ -7,6 +7,8 @@
 
   const onLightmap = () => blocks.computeLightmap('lightmap');
 
+  const onOcclusion = () => blocks.computeOcclusion('occlusion');
+
   const onPhysics = () => blocks.computePhysics('physics');
 
   const onReset = () => {
@@ -35,12 +37,17 @@
     <button on:click={onExport}>
       Export Model
     </button>
-    <button on:click={onLightmap}>
-      Export Lightmap
-    </button>
     <button on:click={onPhysics}>
       Export Physics
     </button>
+    <div>
+      <button on:click={onLightmap}>
+        Lightmap
+      </button>
+      <button on:click={onOcclusion}>
+        Occlusion
+      </button>
+    </div>
   </div>
 </tools>
 
@@ -56,6 +63,19 @@
     display: flex;
     background: #222;
     padding: 0.5rem;
+  }
+
+  tools > div > div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  tools > div > div > button:first-child {
+    margin-bottom: 0.25rem;
+  }
+
+  tools > div > div > button:last-child {
+    margin-top: 0.25rem;
   }
 
   button {

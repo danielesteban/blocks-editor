@@ -53,6 +53,9 @@
       case 'lightmap':
         onLightmap(message.lightmap);
         break;
+      case 'occlusion':
+        onOcclusion(message.occlusion);
+        break;
       case 'physics':
         onPhysics(message.boxes);
         break;
@@ -295,6 +298,31 @@
     computingLightmap = [resolve];
     worker.postMessage({
       type: 'computeLightmap',
+    });
+  })
+    .then((serialized) => {
+      if (download) {
+        downloader.download = `${download}.json`;
+        downloader.href = URL.createObjectURL(new Blob([serialized], { type: 'application/json' }));
+        downloader.click();
+      }
+      return serialized;
+    });
+
+  let computingOcclusion;
+  const onOcclusion = ({ data, origin, size }) => {
+    const serialized = JSON.stringify({ data, origin, size });
+    computingOcclusion.forEach((resolve) => resolve(serialized));
+    computingOcclusion = undefined;
+  };
+  export const computeOcclusion = (download) => new Promise((resolve) => {
+    if (computingOcclusion) {
+      computingOcclusion.push(resolve);
+      return;
+    }
+    computingOcclusion = [resolve];
+    worker.postMessage({
+      type: 'computeOcclusion',
     });
   })
     .then((serialized) => {

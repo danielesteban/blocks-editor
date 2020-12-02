@@ -778,6 +778,74 @@ const computeLightmap = ({ offset = { x: 0, y: 0, z: 0 } }) => {
   };
 };
 
+const computeOcclusion = ({ includeGhost = true, offset = { x: 0, y: 0, z: 0 } }) => {
+  const hasOcclusion = (x, y, z) => {
+    if (y < 0 || y >= maxHeight) {
+      return false;
+    }
+    const cx = Math.floor(x / size);
+    const cz = Math.floor(z / size);
+    const key = `${cx}:${cz}`;
+    const chunk = meshedChunks.get(key);
+    if (!chunk) {
+      return false;
+    }
+    x -= size * chunk.x;
+    z -= size * chunk.z;
+    const type = chunk.voxels[getIndex(x, y, z)];
+    return type !== 0 && (includeGhost || !types[type].isGhost) && !types[type].isTranslucent;
+  };
+
+  const { min, max } = [...meshedChunks.values()].reduce(({ min, max }, { x, z, heightmap }) => {
+    const height = heightmap.reduce((max, height) => Math.max(max, height), 0);
+    return {
+      min: {
+        x: Math.min(min.x, x * size),
+        y: 0,
+        z: Math.min(min.z, z * size),
+      },
+      max: {
+        x: Math.max(max.x, (x + 1) * size),
+        y: Math.max(max.y, height),
+        z: Math.max(max.z, (z + 1) * size),
+      },
+    };
+  }, {
+    min: { x: Infinity, y: 0, z: Infinity },
+    max: { x: -Infinity, y: 0, z: -Infinity },
+  });
+  max.y = Math.ceil((max.y + size * 0.5) / size) * size;
+
+  const volume = {
+    x: max.x - min.x,
+    y: max.y - min.y,
+    z: max.z - min.z,
+  };
+
+  const occlusionMap = Array(volume.x * volume.y * volume.z);
+
+  // eslint-disable-next-line prefer-destructuring
+  for (let z = min.z, i = 0; z < max.z; z += 1) {
+    // eslint-disable-next-line prefer-destructuring
+    for (let y = min.y; y < max.y; y += 1) {
+      // eslint-disable-next-line prefer-destructuring
+      for (let x = min.x; x < max.x; x += 1, i += 1) {
+        occlusionMap[i] = String.fromCharCode(hasOcclusion(x, y, z) ? 0xFF : 0);
+      }
+    }
+  }
+
+  return {
+    data: btoa(occlusionMap.join('')),
+    origin: {
+      x: min.x + offset.x,
+      y: min.y + offset.y,
+      z: min.z + offset.z,
+    },
+    size: volume,
+  };
+};
+
 const computePhysics = ({ includeGhost = true, offset = { x: 0, y: 0, z: 0 } }) => {
   const hasMass = (x, y, z) => {
     if (y < 0 || y >= maxHeight) {
@@ -1090,6 +1158,12 @@ context.addEventListener('message', ({ data: message }) => {
       context.postMessage({
         type: 'lightmap',
         lightmap: computeLightmap(message),
+      });
+      break;
+    case 'computeOcclusion':
+      context.postMessage({
+        type: 'occlusion',
+        occlusion: computeOcclusion(message),
       });
       break;
     case 'computePhysics':
