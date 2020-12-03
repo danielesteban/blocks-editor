@@ -7,15 +7,22 @@ const maxHeight = size * subchunks;
 const maxLight = 15;
 const fields = {
   type: 0,
-  light: 1,
-  sunlight: 2,
-  count: 3,
+  light1: 1,
+  light2: 2,
+  light3: 3,
+  sunlight: 4,
+  count: 5,
 };
 const textureWidth = 16;
 const textureHeight = 16;
 
 const chunks = new Map();
-const lightChannels = { light: 1, sunlight: 1 };
+const lightChannels = {
+  light1: { r: 1, g: 1, b: 1 },
+  light2: { r: 1, g: 1, b: 1 },
+  light3: { r: 1, g: 1, b: 1 },
+  sunlight: { r: 1, g: 1, b: 1 },
+};
 let types;
 
 const allocate = (cx, cz) => {
@@ -67,7 +74,7 @@ const voxelNeighbors = [
   { x: 0, y: 1, z: 0 },
   { x: 0, y: -1, z: 0 },
 ];
-const floodLight = (origin, queue, key = 'light') => {
+const floodLight = (origin, queue, key) => {
   const getChunk = getVoxelChunk(origin);
   const isSunLight = key === 'sunlight';
   const isTranslucent = (type) => types[type].isTranslucent;
@@ -106,7 +113,7 @@ const floodLight = (origin, queue, key = 'light') => {
 };
 
 const propagate = (chunk) => {
-  const lightQueue = [];
+  const lightQueues = [[], [], []];
   const sunlightQueue = [];
   const top = maxHeight - 1;
   for (let x = 0; x < size; x += 1) {
@@ -117,19 +124,21 @@ const propagate = (chunk) => {
         if (y === top && types[type].isTranslucent) {
           chunk.voxels[i + fields.sunlight] = maxLight;
           sunlightQueue.push({ x, y: top, z });
-        } else if (types[type].isLight) {
-          chunk.voxels[i + fields.light] = maxLight;
-          lightQueue.push({ x, y, z });
+        } else if (types[type].light) {
+          chunk.voxels[i + fields[`light${types[type].light}`]] = maxLight;
+          lightQueues[types[type].light - 1].push({ x, y, z });
         }
       }
     }
   }
-  floodLight(chunk, lightQueue, 'light');
+  floodLight(chunk, lightQueues[0], 'light1');
+  floodLight(chunk, lightQueues[1], 'light2');
+  floodLight(chunk, lightQueues[2], 'light3');
   floodLight(chunk, sunlightQueue, 'sunlight');
   chunk.hasPropagated = true;
 };
 
-const removeLight = (origin, x, y, z, key = 'light') => {
+const removeLight = (origin, x, y, z, key) => {
   const getChunk = getVoxelChunk(origin);
   const { chunk, cx, cz } = getChunk(x, z);
   const voxel = getIndex(cx, y, cz);
@@ -226,21 +235,22 @@ const update = ({
     heightmap[heightIndex] = y;
   }
   if (hasPropagated) {
-    if (types[current].isLight) {
-      removeLight(chunk, x, y, z);
+    if (types[current].light) {
+      removeLight(chunk, x, y, z, `light${types[current].light}`);
     } else if (types[current].isTranslucent && !types[type].isTranslucent) {
-      ['light', 'sunlight'].forEach((key) => {
+      ['light1', 'light2', 'light3', 'sunlight'].forEach((key) => {
         if (voxels[voxel + fields[key]] !== 0) {
           removeLight(chunk, x, y, z, key);
         }
       });
     }
-    if (types[type].isLight) {
-      voxels[voxel + fields.light] = maxLight;
-      floodLight(chunk, [{ x, y, z }]);
+    if (types[type].light) {
+      const key = `light${types[type].light}`;
+      voxels[voxel + fields[key]] = maxLight;
+      floodLight(chunk, [{ x, y, z }], key);
     } else if (types[type].isTranslucent && !types[current].isTranslucent) {
       const getChunk = getVoxelChunk(chunk);
-      ['light', 'sunlight'].forEach((key) => {
+      ['light1', 'light2', 'light3', 'sunlight'].forEach((key) => {
         const queue = [];
         if (key === 'sunlight' && y === maxHeight - 1) {
           voxels[voxel + fields[key]] = maxLight;
@@ -255,10 +265,10 @@ const update = ({
             const nz = z + offset.z;
             const { chunk, cx, cz } = getChunk(nx, nz);
             const voxel = getIndex(cx, ny, cz);
-            const { isLight, isTranslucent } = types[chunk.voxels[voxel]];
+            const { light, isTranslucent } = types[chunk.voxels[voxel]];
             if (
               chunk.voxels[voxel + fields[key]] !== 0
-              && (isTranslucent || (isLight && key === 'light'))
+              && (isTranslucent || (light && key !== 'sunlight'))
             ) {
               queue.push({ x: nx, y: ny, z: nz });
             }
@@ -284,7 +294,35 @@ const clone = ({ x, y, z }, to) => {
   });
 };
 
-const getLighting = ({ light, sunlight }, neighbors) => neighbors.map((neighbors) => {
+const getLightColor = (l1, l2, l3, s, ao = 1) => {
+  const color = ['r', 'g', 'b'].reduce((color, key) => {
+    color[key] = Math.max(
+      Math.min(
+        (
+          l1 ** 2 * lightChannels.light1[key]
+          + l2 ** 2 * lightChannels.light2[key]
+          + l3 ** 2 * lightChannels.light3[key]
+          + s ** 2 * lightChannels.sunlight[key]
+        ),
+        1
+      ),
+      0.02
+    ) * ao;
+    return color;
+  }, {});
+  color.avg = (color.r + color.g + color.b) / 3;
+  return color;
+};
+
+const getLighting = (
+  {
+    light1,
+    light2,
+    light3,
+    sunlight,
+  },
+  neighbors
+) => neighbors.map((neighbors) => {
   let n1 = types[neighbors[0].type].hasAO;
   let n2 = types[neighbors[1].type].hasAO;
   let n3 = (n1 && n2) || types[neighbors[2].type].hasAO;
@@ -292,29 +330,44 @@ const getLighting = ({ light, sunlight }, neighbors) => neighbors.map((neighbors
     ao - (n ? 0.1 : 0)
   ), 1);
   let c = 1;
-  let l = light;
+  let l1 = light1;
+  let l2 = light2;
+  let l3 = light3;
   let s = sunlight;
   n1 = types[neighbors[0].type].isTranslucent;
   n2 = types[neighbors[1].type].isTranslucent;
   n3 = (n1 || n2) && types[neighbors[2].type].isTranslucent;
   [n1, n2, n3].forEach((n, i) => {
     if (n) {
-      l += neighbors[i].light;
+      l1 += neighbors[i].light1;
+      l2 += neighbors[i].light2;
+      l3 += neighbors[i].light3;
       s += neighbors[i].sunlight;
       c += 1;
     }
   });
-  return (
-    Math.max(
-      Math.max(l * lightChannels.light, s * lightChannels.sunlight) / c / maxLight,
-      0.02
-    ) * ao
-  );
+  l1 = l1 / c / maxLight;
+  l2 = l2 / c / maxLight;
+  l3 = l3 / c / maxLight;
+  s = s / c / maxLight;
+  return getLightColor(l1, l2, l3, s, ao);
 });
 
 const edges = {
-  top: { type: 0, light: 0, sunlight: maxLight },
-  bottom: { type: 0, light: 0, sunlight: 0 },
+  top: {
+    type: 0,
+    light1: 0,
+    light2: 0,
+    light3: 0,
+    sunlight: maxLight,
+  },
+  bottom: {
+    type: 0,
+    light1: 0,
+    light2: 0,
+    light3: 0,
+    sunlight: 0,
+  },
 };
 const getVoxelData = (origin) => {
   const getChunk = getVoxelChunk(origin);
@@ -329,7 +382,9 @@ const getVoxelData = (origin) => {
     const i = getIndex(cx, y, cz);
     return {
       type: chunk.voxels[i],
-      light: chunk.voxels[i + fields.light],
+      light1: chunk.voxels[i + fields.light1],
+      light2: chunk.voxels[i + fields.light2],
+      light3: chunk.voxels[i + fields.light3],
       sunlight: chunk.voxels[i + fields.sunlight],
     };
   };
@@ -408,7 +463,7 @@ const mesh = (cx, cz) => {
         [texture.from, facing + textureY.from],
       ];
       const vertices = [p1, p2, p3, p4];
-      if (lighting[0] + lighting[2] < lighting[1] + lighting[3]) {
+      if (lighting[0].avg + lighting[2].avg < lighting[1].avg + lighting[3].avg) {
         lighting.unshift(lighting.pop());
         uvs.unshift(uvs.pop());
         vertices.unshift(vertices.pop());
@@ -421,7 +476,7 @@ const mesh = (cx, cz) => {
       } else if (types[type].isGhost) {
         mesh = geometry.ghost;
       }
-      lighting.forEach((light) => mesh.color.push(light, light, light));
+      lighting.forEach((light) => mesh.color.push(light.r, light.g, light.b));
       uvs.forEach((uv) => mesh.uv.push(...uv));
       vertices.forEach((vertex) => mesh.position.push(...vertex));
       [0, 1, 2, 2, 3, 0].forEach((i) => mesh.index.push(mesh.offset + i));
@@ -573,12 +628,23 @@ const mesh = (cx, cz) => {
         );
       }
     };
-    const cross = (x, y, z, { type, light, sunlight }, doubleSide) => {
+    const cross = (
+      x, y, z,
+      {
+        type,
+        light1,
+        light2,
+        light3,
+        sunlight,
+      },
+      doubleSide
+    ) => {
       const lighting = (() => {
-        const lighting = Math.max(
-          Math.max(light * lightChannels.light, sunlight * lightChannels.sunlight) / maxLight,
-          0.02
-        );
+        const l1 = light1 / maxLight;
+        const l2 = light2 / maxLight;
+        const l3 = light3 / maxLight;
+        const s = sunlight / maxLight;
+        const lighting = getLightColor(l1, l2, l3, s);
         return [...Array(4)].map(() => lighting);
       })();
       pushFace(
@@ -713,19 +779,21 @@ const computeLightmap = ({ offset = { x: 0, y: 0, z: 0 } }) => {
     const key = `${cx}:${cz}`;
     const chunk = meshedChunks.get(key);
     if (!chunk) {
-      return 0;
+      return false;
     }
     x -= size * chunk.x;
     z -= size * chunk.z;
     const voxel = getIndex(x, y, z);
     const type = types[chunk.voxels[voxel]];
     if (!type.isTranslucent) {
-      return 0;
+      return false;
     }
-    return Math.floor((Math.max(
-      chunk.voxels[voxel + fields.light] * lightChannels.light,
-      chunk.voxels[voxel + fields.sunlight] * lightChannels.sunlight
-    ) * 0xFF) / maxLight);
+    return [
+      Math.floor((chunk.voxels[voxel + fields.light1] / maxLight) * 0xFF),
+      Math.floor((chunk.voxels[voxel + fields.light2] / maxLight) * 0xFF),
+      Math.floor((chunk.voxels[voxel + fields.light3] / maxLight) * 0xFF),
+      Math.floor((chunk.voxels[voxel + fields.sunlight] / maxLight) * 0xFF),
+    ];
   };
 
   const { min, max } = [...meshedChunks.values()].reduce(({ min, max }, { x, z, heightmap }) => {
@@ -754,20 +822,29 @@ const computeLightmap = ({ offset = { x: 0, y: 0, z: 0 } }) => {
     z: max.z - min.z,
   };
 
-  const lightmap = Array(volume.x * volume.y * volume.z);
+  const lightmap = Array(volume.x * volume.y * volume.z * 4);
 
   // eslint-disable-next-line prefer-destructuring
   for (let z = min.z, i = 0; z < max.z; z += 1) {
     // eslint-disable-next-line prefer-destructuring
     for (let y = min.y; y < max.y; y += 1) {
       // eslint-disable-next-line prefer-destructuring
-      for (let x = min.x; x < max.x; x += 1, i += 1) {
-        lightmap[i] = String.fromCharCode(getLight(x, y, z));
+      for (let x = min.x; x < max.x; x += 1, i += 4) {
+        const light = getLight(x, y, z);
+        for (let j = 0; j < 4; j += 1) {
+          lightmap[i + j] = String.fromCharCode(light ? light[j] : 0);
+        }
       }
     }
   }
 
   return {
+    channels: [
+      lightChannels.light1,
+      lightChannels.light2,
+      lightChannels.light3,
+      lightChannels.sunlight,
+    ],
     data: btoa(lightmap.join('')),
     origin: {
       x: min.x + offset.x,
@@ -937,7 +1014,6 @@ context.addEventListener('message', ({ data: message }) => {
       types = [
         {
           name: 'Air',
-          isLight: false,
           isTranslucent: true,
         },
         ...message.types
@@ -990,7 +1066,6 @@ context.addEventListener('message', ({ data: message }) => {
           name: 'Bedrock',
           hasAO: true,
           isCulled: true,
-          isLight: false,
           isTranslucent: false,
         },
       ];
@@ -1017,7 +1092,7 @@ context.addEventListener('message', ({ data: message }) => {
               || prev.hasAlpha !== current.hasAlpha
               || prev.hasBlending !== current.hasBlending
               || prev.isGhost !== current.isGhost
-              || prev.isLight !== current.isLight
+              || prev.light !== current.light
             ) {
               repropagate = true;
               break;
@@ -1037,7 +1112,10 @@ context.addEventListener('message', ({ data: message }) => {
               if (remap) {
                 voxels[i] = remap[voxels[i]];
               }
-              voxels[i + fields.light] = types[voxels[i]].isLight ? maxLight : 0;
+              const { light } = types[voxels[i]];
+              voxels[i + fields.light1] = light === 1 ? maxLight : 0;
+              voxels[i + fields.light2] = light === 2 ? maxLight : 0;
+              voxels[i + fields.light3] = light === 3 ? maxLight : 0;
               voxels[i + fields.sunlight] = 0;
             }
             chunk.hasPropagated = false;
@@ -1048,7 +1126,9 @@ context.addEventListener('message', ({ data: message }) => {
       break;
     }
     case 'lighting':
-      lightChannels.light = message.channels.light;
+      lightChannels.light1 = message.channels.channel1;
+      lightChannels.light2 = message.channels.channel2;
+      lightChannels.light3 = message.channels.channel3;
       lightChannels.sunlight = message.channels.sunlight;
       remeshAll();
       break;
@@ -1118,8 +1198,9 @@ context.addEventListener('message', ({ data: message }) => {
                 if (heightmap[heightmapIndex] < y) {
                   heightmap[heightmapIndex] = y;
                 }
-                if (message.types[type - 1].isLight) {
-                  voxels[i + fields.light] = maxLight;
+                const { light } = message.types[type - 1];
+                if (light) {
+                  voxels[i + fields[`light${light}`]] = maxLight;
                 }
               }
             }

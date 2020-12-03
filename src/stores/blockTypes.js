@@ -109,7 +109,7 @@ export default () => {
           hasAlpha: type.hasAlpha || false,
           hasBlending: type.hasBlending || false,
           isGhost: false,
-          isLight: type.isLight || false,
+          light: 0,
           key,
         }]);
         key += 1;
@@ -251,8 +251,10 @@ export default () => {
   })();
   types.reset();
   const lighting = writable({
-    light: 0.75,
-    sunlight: 0.75,
+    sunlight: { r: 0.75, g: 0.75, b: 0.75 },
+    channel1: { r: 0.75, g: 0.75, b: 0.75 },
+    channel2: { r: 0, g: 0, b: 0 },
+    channel3: { r: 0, g: 0, b: 0 },
   });
   return {
     atlas,

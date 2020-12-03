@@ -98,15 +98,35 @@
 </script>
 
 <block>
-  <name>
+  <modifiers>
     <input
       type="text"
       value={type.name}
       on:change={({ target: { value } }) => { types.update($editor, 'name', value); }}
     />
-  </name>
+    &nbsp;
+    <label>
+      <input
+        type="checkbox"
+        checked={type.hasAlpha}
+        on:change={({ target: { checked } }) => { types.update($editor, 'hasAlpha', checked); }}
+      />
+      Alpha
+    </label>
+    &nbsp;
+    <label>
+      <input
+        type="checkbox"
+        checked={type.hasBlending}
+        on:change={({ target: { checked } }) => { types.update($editor, 'hasBlending', checked); }}
+      />
+      Blending
+    </label>
+    &nbsp;
+  </modifiers>
   <modifiers>
     <label>
+      Model:
       <!-- svelte-ignore a11y-no-onchange -->
       <select
         value={type.model}
@@ -121,20 +141,25 @@
       </select>
     </label>
     <label>
-      <input
-        type="checkbox"
-        checked={type.hasAlpha}
-        on:change={({ target: { checked } }) => { types.update($editor, 'hasAlpha', checked); }}
-      />
-      Alpha
-    </label>
-    <label>
-      <input
-        type="checkbox"
-        checked={type.hasBlending}
-        on:change={({ target: { checked } }) => { types.update($editor, 'hasBlending', checked); }}
-      />
-      Blend
+      Emit:
+      <!-- svelte-ignore a11y-no-onchange -->
+      <select
+        value={`${type.light}`}
+        on:change={({ target: { value } }) => { types.update($editor, 'light', parseInt(value, 10)); }}
+      >
+        <option value="0">
+          Off
+        </option>
+        <option value="1">
+          Channel 1
+        </option>
+        <option value="2">
+          Channel 2
+        </option>
+        <option value="3">
+          Channel 3
+        </option>
+      </select>
     </label>
     <label>
       <input
@@ -143,14 +168,6 @@
         on:change={({ target: { checked } }) => { types.update($editor, 'isGhost', checked); }}
       />
       Ghost
-    </label>
-    <label>
-      <input
-        type="checkbox"
-        checked={type.isLight}
-        on:change={({ target: { checked } }) => { types.update($editor, 'isLight', checked); }}
-      />
-      Light
     </label>
   </modifiers>
 </block>
@@ -252,20 +269,17 @@
     border-bottom: 2px solid #111;
   }
 
-  name, modifiers {
+  modifiers {
     box-sizing: border-box;
     display: flex;
     align-items: center;
     border-bottom: 2px solid #111;
-  }
-
-  name > input {
-    width: 100%;
-  }
-
-  modifiers {
     justify-content: space-evenly;
     padding: 0.5rem 0;
+  }
+
+  modifiers:first-child {
+    padding: 0;
   }
 
   modifiers > label {

@@ -285,8 +285,8 @@
   };
 
   let computingLightmap;
-  const onLightmap = ({ data, origin, size }) => {
-    const serialized = JSON.stringify({ data, origin, size });
+  const onLightmap = ({ channels, data, origin, size }) => {
+    const serialized = JSON.stringify({ channels, data, origin, size });
     computingLightmap.forEach((resolve) => resolve(serialized));
     computingLightmap = undefined;
   };

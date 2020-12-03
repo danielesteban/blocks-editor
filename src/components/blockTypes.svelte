@@ -50,8 +50,8 @@
         {[
           ...(type.hasAlpha ? ['alpha'] : []),
           ...(type.hasBlending ? ['blending'] : []),
-          ...(type.isLight ? ['emits light'] : []),
           ...(type.isGhost ? ['ghost'] : []),
+          ...(type.light ? [`emits on ${type.light}`] : []),
         ].join(' | ')}
         &nbsp;
       </modifiers>

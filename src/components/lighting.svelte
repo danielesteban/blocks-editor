@@ -1,53 +1,67 @@
 <script>
+  import { Color } from 'three';
+
+  const color = new Color();
+
   export let lighting;
+
+  $: sunlight = `#${color.copy($lighting.sunlight).getHexString()}`;
+  $: channel1 = `#${color.copy($lighting.channel1).getHexString()}`;
+  $: channel2 = `#${color.copy($lighting.channel2).getHexString()}`;
+  $: channel3 = `#${color.copy($lighting.channel3).getHexString()}`;
+
+  const update = (channel) => ({ target: { value } }) => {
+    color.set(value);
+    $lighting[channel] = { r: color.r, g: color.g, b: color.b };
+  };
 </script>
 
-<tools>
+<channels>
   <label>
-    <span>Sunlight:</span>
+    Sunlight
     <input
-      type="range"
-      bind:value={$lighting.sunlight}
-      min={0}
-      max={1}
-      step={0.01}
+      type="color"
+      value={sunlight}
+      on:change={update('sunlight')}
     />
   </label>
   <label>
-    <span>Blocklight:</span>
+    Channel1
     <input
-      type="range"
-      bind:value={$lighting.light}
-      min={0}
-      max={1}
-      step={0.01}
+      type="color"
+      value={channel1}
+      on:change={update('channel1')}
     />
   </label>
-</tools>
+  <label>
+    Channel2
+    <input
+      type="color"
+      value={channel2}
+      on:change={update('channel2')}
+    />
+  </label>
+  <label>
+    Channel3
+    <input
+      type="color"
+      value={channel3}
+      on:change={update('channel3')}
+    />
+  </label>
+</channels>
 
 <style>
-  tools {
+  channels {
+    display: flex;
+    background: #222;
+    padding: 0.5rem 1rem 0.75rem;
+    justify-content: space-between;
+  }
+
+  channels > label {
     display: flex;
     flex-direction: column;
-    background: #222;
-    padding: 0.75rem 0.5rem;
-  }
-
-  tools > label {
-    display: flex;
     align-items: center;
-    padding: 0.25rem 0.5rem;
-  }
-
-  tools > label > span {
-    display: inline-block;
-    width: 80px;
-  }
-  
-  tools > label > input[type="range"] {
-    display: flex;
-    align-items: center;
-    margin-left: 0.5rem;
-    width: 220px;
   }
 </style>
