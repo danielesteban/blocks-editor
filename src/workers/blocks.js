@@ -923,7 +923,11 @@ const computeOcclusion = ({ includeGhost = true, offset = { x: 0, y: 0, z: 0 } }
   };
 };
 
-const computePhysics = ({ includeGhost = true, offset = { x: 0, y: 0, z: 0 } }) => {
+const computePhysics = ({
+  includeAlpha = false,
+  includeGhost = true,
+  offset = { x: 0, y: 0, z: 0 },
+}) => {
   const hasMass = (x, y, z) => {
     if (y < 0 || y >= maxHeight) {
       return false;
@@ -938,7 +942,11 @@ const computePhysics = ({ includeGhost = true, offset = { x: 0, y: 0, z: 0 } }) 
     x -= size * chunk.x;
     z -= size * chunk.z;
     const type = chunk.voxels[getIndex(x, y, z)];
-    return type !== 0 && (includeGhost || !types[type].isGhost) && types[type].model !== 'cross';
+    return (
+      type !== 0
+      && (includeGhost || !types[type].isGhost)
+      && (includeAlpha || !types[type].hasAlpha)
+    );
   };
 
   const { min, max } = [...meshedChunks.values()].reduce(({ min, max }, { x, z }) => ({
