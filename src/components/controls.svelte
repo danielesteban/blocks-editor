@@ -49,6 +49,8 @@
       return;
     }
 
+    let hasMoved = false;
+
     if (pointer.x !== 0 || pointer.y !== 0) {
       const { euler } = aux;
       euler.setFromQuaternion(camera.quaternion);
@@ -58,6 +60,7 @@
       euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
       camera.quaternion.setFromEuler(euler);
       pointer.set(0, 0);
+      hasMoved = true;
     }
   
     if (keyboard.x !== 0 || keyboard.y !== 0 || keyboard.z !== 0) {
@@ -76,6 +79,12 @@
         .addScaledVector(forward, keyboard.z)
         .normalize();
       player.position.addScaledVector(direction, delta * 12);
+      hasMoved = true;
+    }
+
+    if (hasMoved) {
+      raycaster.setFromCamera(crosshair, camera);
+      dispatch('movement', { raycaster });
     }
 
     if (

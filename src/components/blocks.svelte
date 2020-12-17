@@ -409,6 +409,7 @@
       secondaryDown: isRemoving,
       tertiaryDown: isPicking,
     } = buttons;
+    onMovement({ detail: { raycaster } });
     if (!isPlacing && !isRemoving && !isPicking) {
       return;
     }
@@ -438,6 +439,16 @@
     });
   };
 
+  let blockAtPointer = false;
+  const onMovement = ({ detail: { raycaster } }) => {
+    const block = getBlock(raycaster, false);
+    blockAtPointer = block ? {
+      x: block.x,
+      y: block.y,
+      z: block.z,
+    } : false;
+  };
+
   const onPick = (type) => {
     selected = type - 1;
   };
@@ -447,6 +458,7 @@
   bind:this={controls}
   bind:isLocked={isLocked}
   on:buttons={onButtons}
+  on:movement={onMovement}
 />
 <Renderer
   bind:scene={scene}
@@ -455,6 +467,10 @@
 />
 
 <Help isLocked={isLocked} />
+
+<info class:visible={isLocked}>
+  {blockAtPointer ? `X: ${blockAtPointer.x} Y: ${blockAtPointer.y} Z: ${blockAtPointer.z}` : ''}
+</info>
 
 {#if isLocked}
   <crosshair>
@@ -484,5 +500,17 @@
   crosshair > div:nth-child(2) {
     width: 2px;
     height: 8px;
+  }
+
+  info {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    pointer-events: none;
+    display: none;
+  }
+
+  info.visible {
+    display: block;
   }
 </style>
