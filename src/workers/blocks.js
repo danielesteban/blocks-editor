@@ -814,7 +814,7 @@ const computeLightmap = ({ offset = { x: 0, y: 0, z: 0 } }) => {
     min: { x: Infinity, y: 0, z: Infinity },
     max: { x: -Infinity, y: 0, z: -Infinity },
   });
-  max.y = Math.ceil((max.y + size * 0.5) / size) * size;
+  max.y = Math.min(Math.ceil((max.y + size * 0.5) / size) * size, maxHeight);
 
   const volume = {
     x: max.x - min.x,
