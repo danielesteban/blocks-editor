@@ -2,6 +2,7 @@
   import Blocks from '../components/blocks.svelte';
   import BlockTypes from '../components/blockTypes.svelte';
   import BlockEditor from '../components/blockEditor.svelte';
+  import Brush from '../components/brush.svelte';
   import Lighting from '../components/lighting.svelte';
   import ScriptEditor from '../components/scriptEditor.svelte';
   import Tools from '../components/tools.svelte';
@@ -46,6 +47,10 @@
         types={types}
       />
     </scroll>
+    <heading>
+      Brush
+    </heading>
+    <Brush colors={colors} />
     <heading>
       Lighting
     </heading>

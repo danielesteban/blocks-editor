@@ -100,13 +100,17 @@
     display: flex;
     flex-direction: column;
     background: #222;
-    padding: 0.5rem 0;
+    padding: 0.25rem 0;
   }
 
   tools > div {
     display: flex;
     background: #222;
-    padding: 0.5rem;
+    padding: 0.25rem;
+  }
+
+  tools > div > button {
+    width: calc(100% / 3);
   }
 
   tools > div > div {

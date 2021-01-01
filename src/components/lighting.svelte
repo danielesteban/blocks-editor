@@ -44,7 +44,7 @@
     />
   </label>
 </channels>
-<channels>
+<channels class="bottom">
   <label>
     Channel1
     <input
@@ -76,7 +76,11 @@
     display: flex;
     background: #222;
     justify-content: space-between;
-    padding: 0.5rem 1rem 0.75rem;
+    padding: 0.25rem 1rem 0;
+  }
+
+  channels.bottom {
+    padding-bottom: 0.5rem;
   }
 
   channels > label {
