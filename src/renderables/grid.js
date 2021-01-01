@@ -1,4 +1,5 @@
 import {
+  Color,
   Mesh,
   PlaneBufferGeometry,
   ShaderMaterial,
@@ -8,7 +9,7 @@ import {
 
 class Grid extends Mesh {
   static setupGeometry() {
-    Grid.geometry = new PlaneBufferGeometry(128, 128);
+    Grid.geometry = new PlaneBufferGeometry(256, 256);
     Grid.geometry.rotateX(Math.PI * -0.5);
   }
 
@@ -28,8 +29,8 @@ class Grid extends Mesh {
         'varying vec3 fragPosition;',
         'const vec3 chunkColor = vec3(0.0, 0.7, 0.0);',
         'const vec3 voxelsColor = vec3(0.7);',
-        'const vec3 fogColor = vec3(0.0);',
-        'const float fogDensity = 0.03;',
+        'const float fogDensity = 0.02;',
+        'uniform vec3 fogColor;',
         'float line(vec2 position) {',
         '  vec2 coord = abs(fract(position - 0.5) - 0.5) / fwidth(position);',
         '  return 1.0 - min(min(coord.x, coord.y), 1.0);',
@@ -41,6 +42,9 @@ class Grid extends Mesh {
         '  gl_FragColor = vec4(mix(grid, fogColor, fogFactor), 1.0);',
         '}',
       ].join('\n'),
+      uniforms: {
+        fogColor: { value: new Color() },
+      },
     });
   }
 

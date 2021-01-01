@@ -3,6 +3,7 @@
     ['Left Click', 'Place block'],
     ['Right Click', 'Remove block'],
     ['Middle Click', 'Pick block'],
+    ['Wheel', 'Movement speed'],
     ['spacing'],
     ['W', 'Forwards'],
     ['A', 'Leftwards'],

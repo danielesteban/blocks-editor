@@ -66,6 +66,7 @@ export default [
       file: path.join(__dirname, 'dist', `${name}.worker.js`),
     },
     plugins: [
+      resolve(),
       ...(production ? [terser()] : []),
     ],
   })),

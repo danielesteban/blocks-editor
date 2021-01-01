@@ -2,6 +2,8 @@
   import { onMount, onDestroy } from 'svelte';
   import { Vector3 } from 'three';
   import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
+  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+  import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader';
   import SimplexNoise from 'simplex-noise';
   import DesktopControls from './controls.svelte';
   import Help from './help.svelte';
@@ -10,6 +12,7 @@
   import Voxels from '../renderables/voxels';
 
   export let atlas;
+  export let colors;
   export let editor;
   export let lighting;
   export let script;
@@ -83,11 +86,11 @@
   });
 
   const loader = document.createElement('input');
-  loader.accept = 'application/json';
   loader.type = 'file';
   loader.style.display = 'none';
   document.body.appendChild(loader);
   export const load = () => {
+    loader.accept = 'application/json';
     loader.onchange = ({ target: { files: [file] } }) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -120,6 +123,99 @@
     };
     loader.click();
   };
+
+  const gltfLoader = new GLTFLoader();
+  const plyLoader = new PLYLoader();
+  export const voxelize = ({ scale, threshold, flipX, flipZ, zUp }) => {
+    loader.accept = '.csv,.glb,.ply';
+    loader.onchange = ({ target: { files: [file] } }) => {
+      const format = file.name.substr(file.name.lastIndexOf('.') + 1).toLowerCase();
+      if (!['csv', 'glb', 'ply'].includes(format)) {
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        children.length = 0;
+        [...subchunks.values()].forEach(({ meshes }) => {
+          meshes.alpha.visible = false;
+          meshes.blending.visible = false;
+          meshes.ghost.visible = false;
+          meshes.opaque.visible = false;
+        });
+        let parse;
+        switch (format) {
+          case 'csv': {
+            parse = (data, done) => {
+              const rows = data.split('\n').slice(1).filter((r) => r !== '');
+              const position = new Float32Array(rows.length * 3);
+              const color = new Float32Array(rows.length * 3);
+              rows.forEach((row, i) => {
+                const j = i * 3;
+                const [x, y, z, /* l */, r, g, b] = row.split(',');
+                position.set([x, y, z], j);
+                color.set([r / 0xFF, g / 0xFF, b / 0xFF], j);
+              });
+              done({ position, color });
+            };
+            break;
+          }
+          case 'glb': {
+            parse = (data, done) => (
+              gltfLoader.parse(data, null, ({ scene }) => {
+                let geometry;
+                scene.updateMatrixWorld();
+                scene.traverse((child) => {
+                  if (!geometry && child.isMesh) {
+                    child.geometry.applyMatrix4(child.matrixWorld);
+                    geometry = child.geometry;
+                  }
+                });
+                if (!geometry) {
+                  return;
+                }
+                done({
+                  position: geometry.attributes.position.array,
+                  color: geometry.attributes.color ? geometry.attributes.color.array : undefined,
+                });
+              })
+            );
+            break;
+          }
+          case 'ply': {
+            parse = (data, done) => {
+              const parsed = plyLoader.parse(data);
+              done({
+                position: parsed.attributes.position.array,
+                color: parsed.attributes.color ? parsed.attributes.color.array : undefined,
+              });
+            };
+            break;
+          }
+          default:
+            return;
+        }
+        parse(reader.result, (data) => (
+          worker.postMessage({
+            type: 'voxelize',
+            data,
+            scale,
+            threshold,
+            flipX,
+            flipZ,
+            zUp,
+          })
+        ));
+      };
+      if (['glb', 'ply'].includes(format)) {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsText(file);
+      }
+      loader.value = null;
+    };
+    loader.click();
+  };
+
 
   const downloader = document.createElement('a');
   downloader.style.display = 'none';
@@ -169,14 +265,14 @@
   };
   
   const helpers = {
-    box(x, y, z, w, h, l, type) {
+    box(x, y, z, w, h, l, type, r, g, b) {
       x = Math.floor(x);
       y = Math.floor(y);
       z = Math.floor(z);
       for (let i = 0; i < w; i += 1) {
         for (let j = 0; j < h; j += 1) {
           for (let k = 0; k < l; k += 1) {
-            helpers.update(x + i, y + j, z + k, type);
+            helpers.update(x + i, y + j, z + k, type, r, g, b);
           }
         }
       }
@@ -196,11 +292,11 @@
         },
       });
     },
-    cylinder(x, y, z, axis, r, h, type) {
+    cylinder(x, y, z, axis, radius, height, type, r, g, b) {
       x = Math.floor(x);
       y = Math.floor(y);
       z = Math.floor(z);
-      const l = Math.ceil(Math.sqrt((r ** 2) + (r ** 2) + (r ** 2)));
+      const l = Math.ceil(Math.sqrt((radius ** 2) + (radius ** 2) + (radius ** 2)));
       switch (axis) {
         default:
         case 'x':
@@ -215,41 +311,49 @@
       }
       for (let i = -l; i < l; i += 1) {
         for (let j = -l; j < l; j += 1) {
-          if (Math.sqrt(((i - 0.5) ** 2) + ((j - 0.5) ** 2)) < r) {
-            for (let k = 0; k < h; k += 1) {
+          if (Math.sqrt(((i - 0.5) ** 2) + ((j - 0.5) ** 2)) < radius) {
+            for (let k = 0; k < height; k += 1) {
               const p = [i, j, k];
-              helpers.update(x + p[axis[0]], y + p[axis[1]], z + p[axis[2]], type);
+              helpers.update(x + p[axis[0]], y + p[axis[1]], z + p[axis[2]], type, r, g, b);
             }
           }
         }
       }
     },
     reset,
-    sphere(x, y, z, r, type) {
+    sphere(x, y, z, radius, type, r, g, b) {
       x = Math.floor(x);
       y = Math.floor(y);
       z = Math.floor(z);
-      const l = Math.ceil(Math.sqrt((r ** 2) + (r ** 2) + (r ** 2)));
+      const l = Math.ceil(Math.sqrt((radius ** 2) + (radius ** 2) + (radius ** 2)));
       for (let i = -l; i < l; i += 1) {
         for (let j = -l; j < l; j += 1) {
           for (let k = -l; k < l; k += 1) {
-            if (Math.sqrt(((i - 0.5) ** 2) + ((j - 0.5) ** 2) + ((k - 0.5) ** 2)) < r) {
-              helpers.update(x + i, y + j, z + k, type);
+            if (Math.sqrt(((i - 0.5) ** 2) + ((j - 0.5) ** 2) + ((k - 0.5) ** 2)) < radius) {
+              helpers.update(x + i, y + j, z + k, type, r, g, b);
             }
           }
         }
       }
     },
-    update(x, y, z, type) {
+    update(x, y, z, type, r = 0xFF, g = 0xFF, b = 0xFF) {
       x = Math.floor(x);
       y = Math.floor(y);
       z = Math.floor(z);
       if (typeof type === 'function') {
-        type = type(x, y, z);
+        const ret = type(x, y, z);
+        if (typeof ret === 'object') {
+          type = ret.type;
+          r = ret.r;
+          g = ret.g;
+          b = ret.b;
+        } else {
+          type = ret;
+        }
       }
       worker.postMessage({
         type: 'update',
-        update: { x, y, z, type },
+        update: { x, y, z, type, r, g, b },
       });
     },
   };
@@ -360,8 +464,11 @@
     });
 
   const grid = new Grid();
+  const background = grid.material.uniforms.fogColor.value;
+  $: background.copy($lighting.background);
 
   onMount(() => {
+    scene.background = background;
     scene.add(grid);
   });
 
@@ -435,6 +542,9 @@
         y: block.y,
         z: block.z,
         type: isRemoving ? 0 : selected + 1,
+        r: $colors.current[0],
+        g: $colors.current[1],
+        b: $colors.current[2],
       },
     });
   };
@@ -449,8 +559,9 @@
     } : false;
   };
 
-  const onPick = (type) => {
+  const onPick = ({ type, r, g, b }) => {
     selected = type - 1;
+    colors.setColor([r, g, b, 0xFF], true);
   };
 </script>
 

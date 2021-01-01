@@ -5,6 +5,8 @@
 
   export let lighting;
 
+  $: ambient = `#${color.copy($lighting.ambient).getHexString()}`;
+  $: background = `#${color.copy($lighting.background).getHexString()}`;
   $: sunlight = `#${color.copy($lighting.sunlight).getHexString()}`;
   $: channel1 = `#${color.copy($lighting.channel1).getHexString()}`;
   $: channel2 = `#${color.copy($lighting.channel2).getHexString()}`;
@@ -18,6 +20,14 @@
 
 <channels>
   <label>
+    Ambient
+    <input
+      type="color"
+      value={ambient}
+      on:change={update('ambient')}
+    />
+  </label>
+  <label>
     Sunlight
     <input
       type="color"
@@ -25,6 +35,16 @@
       on:change={update('sunlight')}
     />
   </label>
+  <label>
+    Sky
+    <input
+      type="color"
+      value={background}
+      on:change={update('background')}
+    />
+  </label>
+</channels>
+<channels>
   <label>
     Channel1
     <input
@@ -55,13 +75,12 @@
   channels {
     display: flex;
     background: #222;
-    padding: 0.5rem 1rem 0.75rem;
     justify-content: space-between;
+    padding: 0.5rem 1rem 0.75rem;
   }
 
   channels > label {
     display: flex;
     flex-direction: column;
-    align-items: center;
   }
 </style>

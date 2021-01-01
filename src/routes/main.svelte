@@ -65,8 +65,8 @@
         </button>
       </heading>
       <BlockEditor
-        editor={blockEditor}
         colors={colors}
+        editor={blockEditor}
         textures={textures}
         types={types}
       />
@@ -77,6 +77,7 @@
       bind:this={blocks}
       bind:selected={selected}
       atlas={atlas}
+      colors={colors}
       editor={blockEditor}
       lighting={lighting}
       script={script}

@@ -4,7 +4,7 @@ export default () => {
   const { subscribe, update } = writable({
     area: [0xFF, 0, 0],
     brush: 2,
-    current: [0xFF, 0, 0, 0xFF],
+    current: [0xFF, 0xFF, 0xFF, 0xFF],
     noise: 0,
     picking: false,
     palette: [...Array(8)].map(() => [0, 0, 0, 127]),

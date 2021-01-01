@@ -21,7 +21,7 @@
 
   const clock = new Clock();
 
-  const camera = new PerspectiveCamera(70, 1, 0.01, 100);
+  const camera = new PerspectiveCamera(70, 1, 0.01, 512);
   const player = new Group();
   player.position.copy(initialPosition);
   player.add(camera);

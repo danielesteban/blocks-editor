@@ -28,6 +28,7 @@
   const keyboard = new Vector3(0, 0, 0);
   const pointer = new Vector2(0, 0);
   const raycaster = new Raycaster();
+  let speed = 8;
   
   onMount(() => {
     document.addEventListener('pointerlockchange', onPointerLock);
@@ -78,7 +79,7 @@
         .addScaledVector(worldUp, keyboard.y)
         .addScaledVector(forward, keyboard.z)
         .normalize();
-      player.position.addScaledVector(direction, delta * 12);
+      player.position.addScaledVector(direction, delta * speed);
       hasMoved = true;
     }
 
@@ -220,6 +221,17 @@
     }
   };
 
+  const minSpeed = Math.log(2);
+  const maxSpeed = Math.log(32);
+  const speedRange = maxSpeed - minSpeed;
+  const wheelSensitivity = 0.0003;
+  const onWheel = ({ deltaY }) => {
+    const logSpeed = Math.log(speed);
+    speed = (logSpeed - minSpeed) / speedRange;
+    speed = Math.min(Math.max(speed - (-deltaY * wheelSensitivity), 0), 1);
+    speed = Math.exp(minSpeed + speed * speedRange);
+  };
+
   const onPointerLock = () => {
     isLocked = !!document.pointerLockElement;
   };
@@ -232,4 +244,5 @@
   on:mousedown={onMouseDown}
   on:mousemove={onMouseMove}
   on:mouseup={onMouseUp}
+  on:wheel={onWheel}
 />

@@ -251,6 +251,8 @@ export default () => {
   })();
   types.reset();
   const lighting = writable({
+    ambient: { r: 0.02, g: 0.02, b: 0.02 },
+    background: { r: 0, g: 0, b: 0 },
     sunlight: { r: 0.75, g: 0.75, b: 0.75 },
     channel1: { r: 0.75, g: 0.75, b: 0.75 },
     channel2: { r: 0, g: 0, b: 0 },

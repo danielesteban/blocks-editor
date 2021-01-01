@@ -1,23 +1,29 @@
+import pako from 'pako';
+
 // eslint-disable-next-line no-restricted-globals
 const context = self;
 
 const size = 16;
-const subchunks = 5;
+const subchunks = 10;
 const maxHeight = size * subchunks;
 const maxLight = 15;
 const fields = {
   type: 0,
-  light1: 1,
-  light2: 2,
-  light3: 3,
-  sunlight: 4,
-  count: 5,
+  r: 1,
+  g: 2,
+  b: 3,
+  light1: 4,
+  light2: 5,
+  light3: 6,
+  sunlight: 7,
+  count: 8,
 };
 const textureWidth = 16;
 const textureHeight = 16;
 
 const chunks = new Map();
 const lightChannels = {
+  ambient: { r: 0.02, g: 0.02, b: 0.02 },
   light1: { r: 1, g: 1, b: 1 },
   light2: { r: 1, g: 1, b: 1 },
   light3: { r: 1, g: 1, b: 1 },
@@ -205,6 +211,9 @@ const update = ({
   y,
   z,
   type,
+  r,
+  g,
+  b,
 }) => {
   const chunk = getChunk(
     Math.floor(x / size),
@@ -220,6 +229,9 @@ const update = ({
   const voxel = getIndex(x, y, z);
   const current = voxels[voxel];
   voxels[voxel] = type;
+  voxels[voxel + fields.r] = type !== types.air ? r : 0;
+  voxels[voxel + fields.g] = type !== types.air ? g : 0;
+  voxels[voxel + fields.b] = type !== types.air ? b : 0;
   const heightIndex = (x * size) + z;
   const height = heightmap[heightIndex];
   if (type === types.air) {
@@ -288,9 +300,13 @@ const clone = ({ x, y, z }, to) => {
   );
   x -= size * chunk.x;
   z -= size * chunk.z;
+  const voxel = getIndex(x, y, z);
   return update({
     ...to,
-    type: chunk.voxels[getIndex(x, y, z)],
+    type: chunk.voxels[voxel],
+    r: chunk.voxels[voxel + fields.r],
+    g: chunk.voxels[voxel + fields.g],
+    b: chunk.voxels[voxel + fields.b],
   });
 };
 
@@ -306,7 +322,7 @@ const getLightColor = (l1, l2, l3, s, ao = 1) => {
         ),
         1
       ),
-      0.02
+      lightChannels.ambient[key]
     ) * ao;
     return color;
   }, {});
@@ -382,6 +398,11 @@ const getVoxelData = (origin) => {
     const i = getIndex(cx, y, cz);
     return {
       type: chunk.voxels[i],
+      color: {
+        r: chunk.voxels[i + fields.r],
+        g: chunk.voxels[i + fields.g],
+        b: chunk.voxels[i + fields.b],
+      },
       light1: chunk.voxels[i + fields.light1],
       light2: chunk.voxels[i + fields.light2],
       light3: chunk.voxels[i + fields.light3],
@@ -452,6 +473,7 @@ const mesh = (cx, cz) => {
       p3,
       p4,
       type,
+      color,
       lighting,
       facing
     ) => {
@@ -476,13 +498,17 @@ const mesh = (cx, cz) => {
       } else if (types[type].isGhost) {
         mesh = geometry.ghost;
       }
-      lighting.forEach((light) => mesh.color.push(light.r, light.g, light.b));
+      lighting.forEach((light) => mesh.color.push(
+        (color.r / 0xFF) * light.r,
+        (color.g / 0xFF) * light.g,
+        (color.b / 0xFF) * light.b
+      ));
       uvs.forEach((uv) => mesh.uv.push(...uv));
       vertices.forEach((vertex) => mesh.position.push(...vertex));
       [0, 1, 2, 2, 3, 0].forEach((i) => mesh.index.push(mesh.offset + i));
       mesh.offset += 4;
     };
-    const box = (x, y, z, type) => {
+    const box = (x, y, z, type, color) => {
       const top = get(x, y + 1, z);
       const bottom = get(x, y - 1, z);
       const south = get(x, y, z + 1);
@@ -500,6 +526,7 @@ const mesh = (cx, cz) => {
           [x + 1, y + 1, z],
           [x, y + 1, z],
           type,
+          color,
           getLighting(
             top,
             [
@@ -523,6 +550,7 @@ const mesh = (cx, cz) => {
           [x + 1, y, z + 1],
           [x, y, z + 1],
           type,
+          color,
           getLighting(
             bottom,
             [
@@ -546,6 +574,7 @@ const mesh = (cx, cz) => {
           [x + 1, y + 1, z + 1],
           [x, y + 1, z + 1],
           type,
+          color,
           getLighting(
             south,
             [
@@ -569,6 +598,7 @@ const mesh = (cx, cz) => {
           [x, y + 1, z],
           [x + 1, y + 1, z],
           type,
+          color,
           getLighting(
             north,
             [
@@ -592,6 +622,7 @@ const mesh = (cx, cz) => {
           [x, y + 1, z + 1],
           [x, y + 1, z],
           type,
+          color,
           getLighting(
             west,
             [
@@ -615,6 +646,7 @@ const mesh = (cx, cz) => {
           [x + 1, y + 1, z],
           [x + 1, y + 1, z + 1],
           type,
+          color,
           getLighting(
             east,
             [
@@ -632,6 +664,7 @@ const mesh = (cx, cz) => {
       x, y, z,
       {
         type,
+        color,
         light1,
         light2,
         light3,
@@ -653,6 +686,7 @@ const mesh = (cx, cz) => {
         [x + 1, y + 1, z + 1],
         [x, y + 1, z],
         type,
+        color,
         lighting,
         6
       );
@@ -662,6 +696,7 @@ const mesh = (cx, cz) => {
         [x + 1, y + 1, z],
         [x, y + 1, z + 1],
         type,
+        color,
         lighting,
         6
       );
@@ -672,6 +707,7 @@ const mesh = (cx, cz) => {
           [x, y + 1, z],
           [x + 1, y + 1, z + 1],
           type,
+          color,
           lighting,
           6
         );
@@ -681,6 +717,7 @@ const mesh = (cx, cz) => {
           [x, y + 1, z + 1],
           [x + 1, y + 1, z],
           type,
+          color,
           lighting,
           6
         );
@@ -698,7 +735,7 @@ const mesh = (cx, cz) => {
                 cross(x, y, z, voxel, !types[voxel.type].hasAlpha);
                 break;
               default:
-                box(x, y, z, voxel.type);
+                box(x, y, z, voxel.type, voxel.color);
                 break;
             }
           }
@@ -844,6 +881,7 @@ const computeLightmap = ({ offset = { x: 0, y: 0, z: 0 } }) => {
       lightChannels.light2,
       lightChannels.light3,
       lightChannels.sunlight,
+      lightChannels.ambient,
     ],
     data: btoa(lightmap.join('')),
     origin: {
@@ -1014,6 +1052,98 @@ const computePhysics = ({
   ]);
 };
 
+const voxelize = ({
+  data,
+  scale,
+  threshold,
+  flipX,
+  flipZ,
+  zUp,
+}) => {
+  const max = { x: -Infinity, y: -Infinity, z: -Infinity };
+  const min = { x: Infinity, y: Infinity, z: Infinity };
+  for (let i = 0, l = data.position.length; i < l; i += 3) {
+    const x = data.position[i] * (flipX ? -1 : 1);
+    const y = data.position[i + (zUp ? 2 : 1)];
+    const z = data.position[i + (zUp ? 1 : 2)] * (flipZ ? -1 : 1);
+    max.x = Math.max(max.x, x);
+    max.y = Math.max(max.y, y);
+    max.z = Math.max(max.z, z);
+    min.x = Math.min(min.x, x);
+    min.y = Math.min(min.y, y);
+    min.z = Math.min(min.z, z);
+  }
+  const offset = {
+    x: -min.x - (max.x - min.x) * 0.5,
+    y: -min.y,
+    z: -min.z - (max.z - min.z) * 0.5,
+  };
+  const map = new Map();
+  for (let i = 0, l = data.position.length; i < l; i += 3) {
+    const y = Math.floor((data.position[i + (zUp ? 2 : 1)] + offset.y) * scale);
+    if (y < 0 || y >= maxHeight) {
+      continue;
+    }
+    let x = Math.floor(((data.position[i] * (flipX ? -1 : 1)) + offset.x) * scale);
+    let z = Math.floor(((data.position[i + (zUp ? 1 : 2)] * (flipZ ? -1 : 1)) + offset.z) * scale);
+    const chunkX = Math.floor(x / size);
+    const chunkZ = Math.floor(z / size);
+    x -= size * chunkX;
+    z -= size * chunkZ;
+    let chunk = map.get(`${chunkX}:${chunkZ}`);
+    if (!chunk) {
+      chunk = {
+        chunkX,
+        chunkZ,
+        points: [...Array(size * size * maxHeight)].map(() => []),
+      };
+      map.set(`${chunkX}:${chunkZ}`, chunk);
+    }
+    const r = data.color ? data.color[i] : 1;
+    const g = data.color ? data.color[i + 1] : 1;
+    const b = data.color ? data.color[i + 2] : 1;
+    chunk.points[((x * size * maxHeight) + (y * size) + z)].push([r, g, b]);
+  }
+  [...map.values()].forEach(({ chunkX, chunkZ, points }) => {
+    const voxels = new Uint8ClampedArray(size * size * maxHeight * fields.count);
+    const heightmap = new Uint8ClampedArray(size ** 2);
+    for (let x = 0, i = 0, j = 0; x < size; x += 1) {
+      for (let y = 0; y < maxHeight; y += 1) {
+        for (let z = 0; z < size; z += 1, i += fields.count, j += 1) {
+          const point = points[j];
+          if (point.length >= threshold) {
+            const heightmapIndex = (x * size) + z;
+            if (heightmap[heightmapIndex] < y) {
+              heightmap[heightmapIndex] = y;
+            }
+            voxels[i] = 1;
+            const color = { r: 0, g: 0, b: 0 };
+            point.forEach(([r, g, b]) => {
+              color.r += r;
+              color.g += g;
+              color.b += b;
+            });
+            voxels[i + 1] = Math.floor((color.r / point.length) * 0xFF);
+            voxels[i + 2] = Math.floor((color.g / point.length) * 0xFF);
+            voxels[i + 3] = Math.floor((color.b / point.length) * 0xFF);
+          }
+        }
+      }
+    }
+    const key = `${chunkX}:${chunkZ}`;
+    const chunk = {
+      x: chunkX,
+      z: chunkZ,
+      voxels,
+      heightmap,
+      hasPropagated: false,
+      key,
+    };
+    chunks.set(key, chunk);
+    meshedChunks.set(key, chunk);
+  });
+};
+
 context.addEventListener('message', ({ data: message }) => {
   switch (message.type) {
     case 'types': {
@@ -1134,6 +1264,7 @@ context.addEventListener('message', ({ data: message }) => {
       break;
     }
     case 'lighting':
+      lightChannels.ambient = message.channels.ambient;
       lightChannels.light1 = message.channels.channel1;
       lightChannels.light2 = message.channels.channel2;
       lightChannels.light3 = message.channels.channel3;
@@ -1180,9 +1311,15 @@ context.addEventListener('message', ({ data: message }) => {
         );
         block.x -= size * chunk.x;
         block.z -= size * chunk.z;
+        const voxel = getIndex(block.x, block.y, block.z);
         context.postMessage({
           type: 'pick',
-          block: chunk.voxels[getIndex(block.x, block.y, block.z)],
+          block: {
+            type: chunk.voxels[voxel],
+            r: chunk.voxels[voxel + fields.r],
+            g: chunk.voxels[voxel + fields.g],
+            b: chunk.voxels[voxel + fields.b],
+          },
         });
       }
       break;
@@ -1191,16 +1328,20 @@ context.addEventListener('message', ({ data: message }) => {
       chunks.clear();
       meshedChunks.clear();
       types = undefined;
-      message.chunks.forEach(({ x, z, voxels: serialized }) => {
+      message.chunks.forEach(({ x, z, voxels: encoded }) => {
         const key = `${x}:${z}`;
-        const deserialized = new Uint8ClampedArray(atob(serialized).split('').map((c) => c.charCodeAt(0)));
+        const deflated = new Uint8ClampedArray(atob(encoded).split('').map((c) => c.charCodeAt(0)));
+        const data = pako.inflate(deflated);
         const voxels = new Uint8ClampedArray(size * size * maxHeight * fields.count);
         const heightmap = new Uint8ClampedArray(size ** 2);
         for (let x = 0, i = 0, j = 0; x < size; x += 1) {
           for (let y = 0; y < maxHeight; y += 1) {
-            for (let z = 0; z < size; z += 1, i += fields.count, j += 1) {
-              const type = deserialized[j];
+            for (let z = 0; z < size; z += 1, i += fields.count, j += 4) {
+              const type = data[j];
               voxels[i] = type;
+              voxels[i + fields.r] = data[j + 1];
+              voxels[i + fields.g] = data[j + 2];
+              voxels[i + fields.b] = data[j + 3];
               if (type !== 0) {
                 const heightmapIndex = (x * size) + z;
                 if (heightmap[heightmapIndex] < y) {
@@ -1230,15 +1371,22 @@ context.addEventListener('message', ({ data: message }) => {
       context.postMessage({
         type: 'save',
         chunks: [...meshedChunks.values()].map(({ x, z, voxels }) => {
-          const data = new Uint8ClampedArray(size * size * maxHeight);
-          const { length } = voxels;
-          for (let i = 0, j = 0; i < length; i += 1, j += fields.count) {
+          const data = new Uint8ClampedArray(size * size * maxHeight * 4);
+          for (let i = 0, j = 0, l = voxels.length; i < l; i += 4, j += fields.count) {
             data[i] = voxels[j];
+            data[i + 1] = voxels[j + fields.r];
+            data[i + 2] = voxels[j + fields.g];
+            data[i + 3] = voxels[j + fields.b];
           }
+          const deflated = pako.deflate(data);
+          const encoded = Array(deflated.length);
+          deflated.forEach((v, i) => {
+            encoded[i] = String.fromCharCode(v);
+          });
           return {
             x,
             z,
-            voxels: btoa(String.fromCharCode.apply(null, data)),
+            voxels: btoa(encoded.join('')),
           };
         }),
       });
@@ -1264,6 +1412,12 @@ context.addEventListener('message', ({ data: message }) => {
     case 'reset':
       chunks.clear();
       meshedChunks.clear();
+      break;
+    case 'voxelize':
+      chunks.clear();
+      meshedChunks.clear();
+      voxelize(message);
+      remeshAll();
       break;
     default:
       break;
