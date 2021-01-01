@@ -1,6 +1,7 @@
 <script>
   import { tick } from 'svelte';
   import Link from './components/link.svelte';
+  import Sponsor from './components/sponsor.svelte';
   import Main from './routes/main.svelte';
   import router from './stores/router';
 
@@ -50,6 +51,8 @@
     </div>
   </toolbar>
 </app>
+
+<Sponsor />
 
 <style>
   app {
