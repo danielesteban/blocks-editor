@@ -50,12 +50,6 @@
     </button>
   </div>
   <div>
-    <button on:click={onExport}>
-      Export Model
-    </button>
-    <button on:click={onPhysics}>
-      Export Physics
-    </button>
     <div>
       <button on:click={onLightmap}>
         Lightmap
@@ -64,6 +58,12 @@
         Occlusion
       </button>
     </div>
+    <button on:click={onExport}>
+      Export Model
+    </button>
+    <button on:click={onPhysics}>
+      Export Physics
+    </button>
   </div>
 </tools>
 
@@ -132,7 +132,7 @@
     margin: 0 0.5rem;
   }
   
-  .value > input[type="number"], .value > select {
+  .value > input[type="number"] {
     width: 100%;
     margin: 0 0 0.5rem;
   }

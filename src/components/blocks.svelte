@@ -351,6 +351,9 @@
           type = ret;
         }
       }
+      r = Math.floor(r);
+      g = Math.floor(g);
+      b = Math.floor(b);
       worker.postMessage({
         type: 'update',
         update: { x, y, z, type, r, g, b },
