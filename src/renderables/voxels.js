@@ -152,7 +152,10 @@ class Voxels extends Group {
       const mesh = meshes[key];
       if (mesh.visible) {
         const cloned = mesh.clone();
-        if (key !== 'untextured') {
+        if (key === 'untextured') {
+          cloned.geometry = cloned.geometry.clone();
+          cloned.geometry.deleteAttribute('uv');
+        } else {
           cloned.material = materials[key];
         }
         clone.add(cloned);
