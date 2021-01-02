@@ -38,7 +38,7 @@
 
   let textarea;
   let codemirror;
-  onMount(() => {
+  $: if (isOpen && textarea && !codemirror) {
     codemirror = CodeMirror.fromTextArea(textarea, {
       lineNumbers: true,
       lineWrapping: true,
@@ -49,10 +49,15 @@
     codemirror.on('change', () => {
       options.mapping = codemirror.getValue();
     });
-  });
+  }
+  $: if (!isOpen && codemirror) {
+    codemirror.toTextArea();
+    codemirror = null;
+  }
 
   onDestroy(() => {
     codemirror.toTextArea();
+    codemirror = null;
   });
 </script>
 
@@ -79,9 +84,11 @@
   </div>
   <br />
   <label>Mapping function</label>
-  <div class="code">
-    <textarea bind:this={textarea}>{options.mapping}</textarea>
-  </div>
+  {#if isOpen}
+    <div class="code">
+      <textarea bind:this={textarea}>{options.mapping}</textarea>
+    </div>
+  {/if}
   <div class="submit">
     <button on:click={onVoxelize}>
       Voxelize
