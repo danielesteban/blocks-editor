@@ -51,6 +51,7 @@
           ...(type.hasAlpha ? ['alpha'] : []),
           ...(type.hasBlending ? ['blending'] : []),
           ...(type.isGhost ? ['ghost'] : []),
+          ...(type.isUntextured ? ['untextured'] : []),
           ...(type.light ? [`emits on ${type.light}`] : []),
         ].join(' | ')}
         &nbsp;

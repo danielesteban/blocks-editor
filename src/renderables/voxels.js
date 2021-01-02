@@ -38,6 +38,9 @@ class Voxels extends Group {
       opaque: new MeshBasicMaterial({
         vertexColors: true,
       }),
+      untextured: new MeshBasicMaterial({
+        vertexColors: true,
+      }),
     };
   }
 
@@ -129,8 +132,9 @@ class Voxels extends Group {
       blending: new Mesh(new BufferGeometry(), Voxels.materials.blending),
       ghost: new Mesh(new BufferGeometry(), Voxels.materials.ghost),
       opaque: new Mesh(new BufferGeometry(), Voxels.materials.opaque),
+      untextured: new Mesh(new BufferGeometry(), Voxels.materials.untextured),
     };
-    ['alpha', 'blending', 'ghost', 'opaque'].forEach((key) => {
+    ['alpha', 'blending', 'ghost', 'opaque', 'untextured'].forEach((key) => {
       this.meshes[key].matrixAutoUpdate = false;
       this.add(this.meshes[key]);
     });
@@ -144,11 +148,13 @@ class Voxels extends Group {
     const clone = new Group();
     clone.position.copy(position).add(offset);
     clone.scale.copy(scale);
-    ['alpha', 'blending', 'opaque'].forEach((key) => {
+    ['alpha', 'blending', 'opaque', 'untextured'].forEach((key) => {
       const mesh = meshes[key];
       if (mesh.visible) {
         const cloned = mesh.clone();
-        cloned.material = materials[key];
+        if (key !== 'untextured') {
+          cloned.material = materials[key];
+        }
         clone.add(cloned);
       }
     });
@@ -162,7 +168,7 @@ class Voxels extends Group {
 
   update(geometries) {
     const { meshes } = this;
-    ['alpha', 'blending', 'ghost', 'opaque'].forEach((key) => {
+    ['alpha', 'blending', 'ghost', 'opaque', 'untextured'].forEach((key) => {
       const {
         color,
         position,

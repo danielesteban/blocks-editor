@@ -1,9 +1,6 @@
 <script>
-  import { onMount, onDestroy } from 'svelte';
   import CodeMirror from 'codemirror';
-  import 'codemirror/mode/javascript/javascript';
-  import 'codemirror/lib/codemirror.css';
-  import 'codemirror/theme/monokai.css';
+  import { onMount, onDestroy } from 'svelte';
 
   export let blocks;
   export let script;
@@ -36,9 +33,9 @@
   const onRun = () => blocks.runScript();
 </script>
 
-<code>
+<div class="code">
   <textarea bind:this={textarea}>{$script}</textarea>
-</code>
+</div>
 <tools>
   <button on:click={onRun}>
     Run
@@ -46,8 +43,8 @@
 </tools>
 
 <style>
-  code {
-    height: calc(100% - 86px)
+  .code {
+    height: calc(100% - 86px);
   }
 
   tools {

@@ -41,7 +41,7 @@
     color: #fff;
     border: 1px solid #000;
     border-radius: 4px;
-    width: 400px;
+    width: 500px;
   }
 
   content {

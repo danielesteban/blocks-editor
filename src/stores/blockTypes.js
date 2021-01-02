@@ -109,6 +109,7 @@ export default () => {
           hasAlpha: type.hasAlpha || false,
           hasBlending: type.hasBlending || false,
           isGhost: false,
+          isUntextured: false,
           light: 0,
           key,
         }]);
@@ -143,7 +144,7 @@ export default () => {
           },
           ...types.slice(type + 1),
         ]);
-        if (~['hasAlpha', 'hasBlending', 'isGhost', 'model'].indexOf(key)) {
+        if (~['hasAlpha', 'hasBlending', 'isGhost', 'isUntextured', 'model'].indexOf(key)) {
           updateAtlas();
         }
       },
@@ -191,10 +192,11 @@ export default () => {
           hasAlpha,
           hasBlending,
           isGhost,
+          isUntextured,
         },
         i
       ) => {
-        if (!isGhost) {
+        if (!isGhost && !isUntextured) {
           const { bottom, side, top } = $textures[i];
           let material = materials.opaque;
           if (hasAlpha) {

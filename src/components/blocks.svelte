@@ -46,7 +46,7 @@
         });
         children.length = 0;
         [...subchunks.values()].forEach(({ meshes }) => (
-          ['alpha', 'blending', 'ghost', 'opaque'].forEach((key) => {
+          ['alpha', 'blending', 'ghost', 'opaque', 'untextured'].forEach((key) => {
             if (meshes[key].visible) {
               children.push(meshes[key]);
             }
@@ -111,6 +111,7 @@
           meshes.blending.visible = false;
           meshes.ghost.visible = false;
           meshes.opaque.visible = false;
+          meshes.untextured.visible = false;
         });
         worker.postMessage({
           type: 'load',
@@ -126,7 +127,7 @@
 
   const gltfLoader = new GLTFLoader();
   const plyLoader = new PLYLoader();
-  export const voxelize = ({ scale, threshold, flipX, flipZ, zUp }) => {
+  export const voxelize = ({ mapping, scale, threshold, flipX, flipZ, zUp }) => {
     loader.accept = '.csv,.glb,.ply';
     loader.onchange = ({ target: { files: [file] } }) => {
       const format = file.name.substr(file.name.lastIndexOf('.') + 1).toLowerCase();
@@ -141,6 +142,7 @@
           meshes.blending.visible = false;
           meshes.ghost.visible = false;
           meshes.opaque.visible = false;
+          meshes.untextured.visible = false;
         });
         let parse;
         switch (format) {
@@ -198,6 +200,7 @@
           worker.postMessage({
             type: 'voxelize',
             data,
+            mapping,
             scale,
             threshold,
             flipX,
@@ -258,6 +261,7 @@
       meshes.blending.visible = false;
       meshes.ghost.visible = false;
       meshes.opaque.visible = false;
+      meshes.untextured.visible = false;
     });
     worker.postMessage({
       type: 'reset',
@@ -374,8 +378,8 @@
     const materials = Voxels.getExportableMaterials();
     return new Promise((resolve) => exporter.parse((
       [...subchunks.values()]
-        .filter(({ meshes: { alpha, blending, opaque } }) => (
-          alpha.visible || blending.visible || opaque.visible
+        .filter(({ meshes: { alpha, blending, opaque, untextured } }) => (
+          alpha.visible || blending.visible || opaque.visible || untextured.visible
         ))
         .map((mesh) => mesh.clone(materials))
     ), (buffer) => {

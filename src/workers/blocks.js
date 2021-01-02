@@ -457,7 +457,7 @@ const mesh = (cx, cz) => {
   });
   const get = getVoxelData(chunk);
   return [...Array(subchunks)].map((v, subchunk) => {
-    const geometry = ['alpha', 'blending', 'ghost', 'opaque'].reduce((meshes, key) => {
+    const geometry = ['alpha', 'blending', 'ghost', 'opaque', 'untextured'].reduce((meshes, key) => {
       meshes[key] = {
         color: [],
         position: [],
@@ -497,6 +497,8 @@ const mesh = (cx, cz) => {
         mesh = geometry.blending;
       } else if (types[type].isGhost) {
         mesh = geometry.ghost;
+      } else if (types[type].isUntextured) {
+        mesh = geometry.untextured;
       }
       lighting.forEach((light) => mesh.color.push(
         (color.r / 0xFF) * light.r,
@@ -742,7 +744,7 @@ const mesh = (cx, cz) => {
         }
       }
     }
-    return ['alpha', 'blending', 'ghost', 'opaque'].reduce((meshes, key) => {
+    return ['alpha', 'blending', 'ghost', 'opaque', 'untextured'].reduce((meshes, key) => {
       const {
         color,
         position,
@@ -767,7 +769,7 @@ const remesh = (x, z) => {
     position: { x, z },
     subchunks,
   }, subchunks.reduce((buffers, meshes) => {
-    ['alpha', 'blending', 'ghost', 'opaque'].forEach((mesh) => {
+    ['alpha', 'blending', 'ghost', 'opaque', 'untextured'].forEach((mesh) => {
       mesh = meshes[mesh];
       buffers.push(
         mesh.color.buffer,
@@ -1052,6 +1054,35 @@ const computePhysics = ({
   ]);
 };
 
+const hsl = (color) => {
+  const { r, g, b } = color;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  color.l = (min + max) / 2.0;
+  if (min === max) {
+    color.h = 0;
+    color.s = 0;
+  } else {
+    const delta = max - min;
+    color.s = color.l <= 0.5 ? delta / (max + min) : delta / (2 - max - min);
+    switch (max) {
+      case r:
+        color.h = (g - b) / delta + (g < b ? 6 : 0);
+        break;
+      case g:
+        color.h = (b - r) / delta + 2;
+        break;
+      case b:
+        color.h = (r - g) / delta + 4;
+        break;
+      default:
+        break;
+    }
+    color.h /= 6;
+  }
+  return color;
+};
+
 const voxelize = ({
   data,
   scale,
@@ -1059,7 +1090,12 @@ const voxelize = ({
   flipX,
   flipZ,
   zUp,
+  mapping,
 }) => {
+  mapping = new Function([
+    'const [x, y, z, color] = arguments;',
+    mapping,
+  ].join('\n'));
   const max = { x: -Infinity, y: -Infinity, z: -Infinity };
   const min = { x: Infinity, y: Infinity, z: Infinity };
   for (let i = 0, l = data.position.length; i < l; i += 3) {
@@ -1107,6 +1143,7 @@ const voxelize = ({
   [...map.values()].forEach(({ chunkX, chunkZ, points }) => {
     const voxels = new Uint8ClampedArray(size * size * maxHeight * fields.count);
     const heightmap = new Uint8ClampedArray(size ** 2);
+    const color = { r: 0, g: 0, b: 0 };
     for (let x = 0, i = 0, j = 0; x < size; x += 1) {
       for (let y = 0; y < maxHeight; y += 1) {
         for (let z = 0; z < size; z += 1, i += fields.count, j += 1) {
@@ -1116,16 +1153,21 @@ const voxelize = ({
             if (heightmap[heightmapIndex] < y) {
               heightmap[heightmapIndex] = y;
             }
-            voxels[i] = 1;
-            const color = { r: 0, g: 0, b: 0 };
+            color.r = 0;
+            color.g = 0;
+            color.b = 0;
             point.forEach(([r, g, b]) => {
               color.r += r;
               color.g += g;
               color.b += b;
             });
-            voxels[i + 1] = Math.floor((color.r / point.length) * 0xFF);
-            voxels[i + 2] = Math.floor((color.g / point.length) * 0xFF);
-            voxels[i + 3] = Math.floor((color.b / point.length) * 0xFF);
+            color.r /= point.length;
+            color.g /= point.length;
+            color.b /= point.length;
+            voxels[i] = mapping(x, y, z, hsl(color));
+            voxels[i + 1] = Math.floor(color.r * 0xFF);
+            voxels[i + 2] = Math.floor(color.g * 0xFF);
+            voxels[i + 3] = Math.floor(color.b * 0xFF);
           }
         }
       }
@@ -1164,7 +1206,7 @@ context.addEventListener('message', ({ data: message }) => {
             }
             const isCross = type.model === 'cross';
             const index = textures[material];
-            if (!type.isGhost) {
+            if (!type.isGhost && !type.isUntextured) {
               textures[material] += isCross ? 1 : 3;
             }
             return {

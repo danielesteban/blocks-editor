@@ -4,6 +4,9 @@
   import Sponsor from './components/sponsor.svelte';
   import Main from './routes/main.svelte';
   import router from './stores/router';
+  import 'codemirror/mode/javascript/javascript';
+  import 'codemirror/lib/codemirror.css';
+  import 'codemirror/theme/monokai.css';
 
   router.init();
 

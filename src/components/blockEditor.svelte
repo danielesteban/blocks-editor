@@ -123,6 +123,15 @@
       Blending
     </label>
     &nbsp;
+    <label>
+      <input
+        type="checkbox"
+        checked={type.isUntextured}
+        on:change={({ target: { checked } }) => { types.update($editor, 'isUntextured', checked); }}
+      />
+      Untextured
+    </label>
+    &nbsp;
   </modifiers>
   <modifiers>
     <label>
@@ -280,6 +289,10 @@
 
   modifiers:first-child {
     padding: 0;
+  }
+
+  modifiers > input[type="text"] {
+    width: 80px;
   }
 
   modifiers > label {
