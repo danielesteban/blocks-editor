@@ -84,6 +84,7 @@
     }
 
     if (hasMoved) {
+      player.updateMatrixWorld();
       raycaster.setFromCamera(crosshair, camera);
       dispatch('movement', { raycaster });
     }

@@ -33,17 +33,6 @@
   $: if (controls !== lastControls) {
     lastControls = controls;
     controls.setup({ player, renderer });
-  }
-
-  scene.onBeforeRender = (renderer, scene, camera) => {
-    if (controls) {
-      controls.onAnimationTick({
-        animation: renderer.animation,
-        camera,
-        player,
-        viewport,
-      });
-    }
   };
 
   onDestroy(() => {
@@ -67,10 +56,19 @@
   });
 
   const onAnimationTick = () => {
-    renderer.animation = {
+    player.updateMatrixWorld();
+    const animation = {
       delta: Math.min(clock.getDelta(), 1 / 30),
       time: clock.oldTime / 1000,
     };
+    if (controls) {
+      controls.onAnimationTick({
+        animation,
+        camera,
+        player,
+        viewport,
+      });
+    }
     renderer.render(scene, camera);
   };
 
