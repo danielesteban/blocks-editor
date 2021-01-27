@@ -14,8 +14,8 @@
     "express": "^4.17.1",
     "pako": "^2.0.3",
     "simplex-noise": "^2.4.0",
-    "svelte": "^3.31.2",
-    "three": "^0.124.0"
+    "svelte": "^3.32.0",
+    "three": "^0.125.1"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
